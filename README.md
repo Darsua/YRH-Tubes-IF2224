@@ -1,3 +1,8 @@
+# <p align="center" width=300px>NieR: FiniteAutomata: A Pascal-S Lexical Analyzer</p>
+
+<p align="center"><img width="400" alt="image" src="https://github.com/user-attachments/assets/6ef29817-36db-4306-ac96-e9a1e56bdad8" /></p>
+<p align="center" width=300px><i>Our YoRHa programmer, 2B. (by KornArt)</p>
+
 # Identitas Kelompok
 - Muhammad Ra'if Alkautsar (13523011)
 - Fajar Kurniawan (13523027)
