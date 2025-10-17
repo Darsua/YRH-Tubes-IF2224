@@ -2,7 +2,7 @@
 
 using namespace std;
 
-Token::Token(TYPE type, string value) : type(type), value(value) {}
+Token::Token(Type type, string value) : type(type), value(value) {}
 
 string Token::toString() const {
     return getTypeName() + "(" + value + ")";

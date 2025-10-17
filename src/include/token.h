@@ -5,7 +5,7 @@
 
 using namespace std;
 
-enum TYPE {
+enum Type {
     KEYWORD,
     IDENTIFIER,
     ARITHMETIC_OPERATOR,
@@ -30,13 +30,12 @@ enum TYPE {
 
 class Token {
 private:
-    TYPE type;
+    Type type;
     string value;
     
 public:
-    Token(TYPE type, string value);
+    Token(Type type, string value);
     string toString() const;
-    TYPE getType() const;
     string getValue() const;
     string getTypeName() const;
 };
