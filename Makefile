@@ -17,7 +17,6 @@ $(TARGET): $(SOURCES) | $(BINDIR)
 	$(CXX) $(CXXFLAGS) $(SOURCES) -o $@
 
 clean:
-	rm -f $(SRCDIR)/*.o $(TARGET)
 	rm -rf $(BINDIR)
 
 rebuild: clean all
