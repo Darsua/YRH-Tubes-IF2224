@@ -32,8 +32,6 @@ string Token::getTypeName() const {
         case LBRACKET: return "LBRACKET";
         case RBRACKET: return "RBRACKET";
         case RANGE_OPERATOR: return "RANGE_OPERATOR";
-        case COMMENT_START: return "COMMENT_START";
-        case COMMENT_END: return "COMMENT_END";
         default: return "UNKNOWN";
     }
 }

@@ -92,6 +92,12 @@ bool DFA::loadDFAFromFile(const string& filename) {
             char input;
             if (input_str == "SPACE") {
                 input = ' ';
+            } else if (input_str == "NEWLINE") {
+                input = '\n';
+            } else if (input_str == "TAB") {
+                input = '\t';
+            } else if (input_str == "CR") {
+                input = '\r';
             } else if (input_str.length() == 1) {
                 input = input_str[0];
             } else {

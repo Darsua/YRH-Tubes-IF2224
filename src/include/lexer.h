@@ -26,6 +26,8 @@ private:
     bool isLogicalOperator(const string& word);
     bool isArithmeticOperator(const string& word);
     void skipWhitespace(FILE* file);
+    void skipBraceComment(FILE* file);
+    void skipParenComment(FILE* file);
     
     // Switch-based lexer methods
     Token* readTokenSwitch(FILE* file);
