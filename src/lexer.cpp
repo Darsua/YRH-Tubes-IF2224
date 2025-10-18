@@ -87,32 +87,13 @@ Token* Lexer::readTokenSwitch(FILE* file) {
             string value(1, (char)c);
             int next_c;
             
-            // Handle integer part
+            // Handle integer part only - no decimal point handling
             while ((next_c = fgetc(file)) != EOF && isdigit(next_c)) {
                 value += (char)next_c;
             }
             
-            // Check for decimal point (real numbers)
-            if (next_c == '.') {
-                int peek = fgetc(file);
-                if (peek != EOF && isdigit(peek)) {
-                    // It's a real number
-                    value += '.';
-                    value += (char)peek;
-                    while ((next_c = fgetc(file)) != EOF && isdigit(next_c)) {
-                        value += (char)next_c;
-                    }
-                    if (next_c != EOF) {
-                        ungetc(next_c, file);
-                    }
-                } else {
-                    // Put back the peeked character and the dot
-                    if (peek != EOF) {
-                        ungetc(peek, file);
-                    }
-                    ungetc('.', file);
-                }
-            } else if (next_c != EOF) {
+            // Put back the non-digit character
+            if (next_c != EOF) {
                 ungetc(next_c, file);
             }
             
@@ -292,7 +273,7 @@ Token* Lexer::readTokenSwitch(FILE* file) {
 void Lexer::initializeStateMapping() {
     stateToTokenType["S_ID"] = IDENTIFIER;
     stateToTokenType["S_NUM"] = NUMBER;
-    stateToTokenType["S_REAL_NUM"] = NUMBER;
+
     stateToTokenType["S_CHAR_LITERAL"] = CHAR_LITERAL;
     stateToTokenType["S_STRING_LITERAL"] = STRING_LITERAL;
     stateToTokenType["S_STR_END"] = STRING_LITERAL;
