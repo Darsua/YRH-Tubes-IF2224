@@ -52,6 +52,28 @@ void Lexer::skipWhitespace(FILE* file) {
     }
 }
 
+// Helper method to skip brace comments { ... }
+void Lexer::skipBraceComment(FILE* file) {
+    int c;
+    while ((c = fgetc(file)) != EOF && c != '}') {
+        // Just consume characters until closing brace
+    }
+    // No need to put back the closing brace - it's consumed
+}
+
+// Helper method to skip parenthesis comments (* ... *)
+void Lexer::skipParenComment(FILE* file) {
+    int c;
+    int prev_c = 0;
+    while ((c = fgetc(file)) != EOF) {
+        if (prev_c == '*' && c == ')') {
+            break;
+        }
+        prev_c = c;
+    }
+    // No need to put back - the closing *) is consumed
+}
+
 // Switch-based token reading
 Token* Lexer::readTokenSwitch(FILE* file) {
     int c = fgetc(file);
@@ -62,7 +84,8 @@ Token* Lexer::readTokenSwitch(FILE* file) {
     
     switch(c) {
         case 'a'...'z':
-        case 'A'...'Z': {
+        case 'A'...'Z':
+        case '_': {
             string value(1, (char)c);
             int next_c;
             while ((next_c = fgetc(file)) != EOF && (isalnum(next_c) || next_c == '_')) {
@@ -105,17 +128,8 @@ Token* Lexer::readTokenSwitch(FILE* file) {
         case '/':
             return new Token(ARITHMETIC_OPERATOR, string(1, (char)c));
             
-        case '*': {
-            int next_c = fgetc(file);
-            if (next_c == ')') {
-                return new Token(COMMENT_END, "*)");
-            } else {
-                if (next_c != EOF) {
-                    ungetc(next_c, file);
-                }
-                return new Token(ARITHMETIC_OPERATOR, "*");
-            }
-        }
+        case '*':
+            return new Token(ARITHMETIC_OPERATOR, "*");
             
         case '=':
             return new Token(RELATIONAL_OPERATOR, "=");
@@ -186,20 +200,16 @@ Token* Lexer::readTokenSwitch(FILE* file) {
             return new Token(RBRACKET, "]");
             
         case '{': {
-            // Handle brace comments - read until closing brace
-            string commentValue = "{";
-            int next_c;
-            while ((next_c = fgetc(file)) != EOF && next_c != '}') {
-                commentValue += (char)next_c;
-            }
-            if (next_c == '}') {
-                commentValue += '}';
-            }
-            return new Token(COMMENT_START, commentValue);
+            // Skip brace comments - read until closing brace
+            skipBraceComment(file);
+            // Skip whitespace after comment and continue to next token
+            skipWhitespace(file);
+            return readTokenSwitch(file);
         }
         
         case '}':
-            return new Token(COMMENT_END, "}");
+            printf("ERROR: Unexpected closing brace '}' at position %ld - no matching opening brace\n", ftell(file) - 1);
+            exit(1);
         
         case '\'': {
             // Pascal string and character literals use single quotes
@@ -229,28 +239,28 @@ Token* Lexer::readTokenSwitch(FILE* file) {
             }
             
             if (next_c == EOF) {
-                printf("ERROR! Unterminated literal\n");
+                printf("ERROR: Unterminated literal at position %ld\n", ftell(file) - 1);
                 exit(1);
             }
             
-            // Return string literal (both single char and multi-char are STRING_LITERAL to match DFA)
-            return new Token(STRING_LITERAL, value);
+            // Distinguish between character literals and string literals to match DFA behavior
+            // Empty ('') and single character ('a') → CHAR_LITERAL
+            // Multi-character ('abc') → STRING_LITERAL
+            if (value.length() <= 1) {
+                return new Token(CHAR_LITERAL, value);
+            } else {
+                return new Token(STRING_LITERAL, value);
+            }
         }
         
         case '(': {
             int next_c = fgetc(file);
             if (next_c == '*') {
-                // Handle parenthesis comments - read until closing *)
-                string commentValue = "(*";
-                int prev_c = 0;
-                while ((next_c = fgetc(file)) != EOF) {
-                    commentValue += (char)next_c;
-                    if (prev_c == '*' && next_c == ')') {
-                        break;
-                    }
-                    prev_c = next_c;
-                }
-                return new Token(COMMENT_START, commentValue);
+                // Skip parenthesis comments - read until closing *)
+                skipParenComment(file);
+                // Skip whitespace after comment and continue to next token
+                skipWhitespace(file);
+                return readTokenSwitch(file);
             } else {
                 if (next_c != EOF) {
                     ungetc(next_c, file);
@@ -260,7 +270,7 @@ Token* Lexer::readTokenSwitch(FILE* file) {
         }
         
         default:
-            printf("ERROR! Unrecognized character: '%c' (ASCII %d)\n", (char)c, c);
+            printf("ERROR: Unrecognized character '%c' at position %ld\n", (char)c, ftell(file) - 1);
             exit(1);
     }
     
@@ -275,6 +285,8 @@ void Lexer::initializeStateMapping() {
     stateToTokenType["S_NUM"] = NUMBER;
 
     stateToTokenType["S_CHAR_LITERAL"] = CHAR_LITERAL;
+    stateToTokenType["S_SINGLE_CHAR"] = CHAR_LITERAL;
+
     stateToTokenType["S_STRING_LITERAL"] = STRING_LITERAL;
     stateToTokenType["S_STR_END"] = STRING_LITERAL;
     stateToTokenType["S_SEMICOLON"] = SEMICOLON;
@@ -298,13 +310,15 @@ void Lexer::initializeStateMapping() {
     stateToTokenType["S_GT_TEMP"] = RELATIONAL_OPERATOR;
     stateToTokenType["S_GE"] = RELATIONAL_OPERATOR;
     stateToTokenType["S_RANGE"] = RANGE_OPERATOR;
-    stateToTokenType["S_COMMENT_SINGLE"] = COMMENT_START;
-    stateToTokenType["S_COMMENT_MULTI"] = COMMENT_START;
-    stateToTokenType["S_COMMENT_BRACE"] = COMMENT_START;
-    stateToTokenType["S_COMMENT_PAREN"] = COMMENT_START;
+
 }
 
 Token* Lexer::createToken(const string& state, const string& value) {
+    // Check if this is a comment state - if so, return nullptr to indicate skip
+    if (state == "S_COMMENT_SINGLE" || state == "S_COMMENT_MULTI") {
+        return nullptr;  // Signal to skip this token
+    }
+    
     auto it = stateToTokenType.find(state);
     if (it == stateToTokenType.end()) {
         printf("ERROR: Unknown DFA state: %s\n", state.c_str());
@@ -324,11 +338,40 @@ Token* Lexer::createToken(const string& state, const string& value) {
         }
     }
     
-    // Special handling for string literals - remove quotes from value
+    // Special handling for string literals - remove quotes and process escape sequences
     if (tokenType == STRING_LITERAL || tokenType == CHAR_LITERAL) {
         if (value.length() >= 2 && value[0] == '\'' && value[value.length()-1] == '\'') {
-            string content = value.substr(1, value.length() - 2);
-            return new Token(tokenType, content);
+            string raw_content = value.substr(1, value.length() - 2);
+            string processed_content = "";
+            
+            // Process escape sequences in the content
+            for (size_t i = 0; i < raw_content.length(); i++) {
+                if (raw_content[i] == '\\' && i + 1 < raw_content.length()) {
+                    char next_char = raw_content[i + 1];
+                    switch (next_char) {
+                        case 'n': processed_content += '\n'; break;
+                        case 't': processed_content += '\t'; break;
+                        case 'r': processed_content += '\r'; break;
+                        case '\\': processed_content += '\\'; break;
+                        case '\'': processed_content += '\''; break;
+                        default:
+                            processed_content += '\\';
+                            processed_content += next_char;
+                            break;
+                    }
+                    i++; // Skip the next character as it's part of the escape sequence
+                } else {
+                    processed_content += raw_content[i];
+                }
+            }
+            
+            // Post-processing fix: Convert STRING_LITERAL to CHAR_LITERAL for single characters
+            // This ensures DFA and switch lexers agree on single escaped characters like '\n'
+            if (tokenType == STRING_LITERAL && processed_content.length() <= 1) {
+                tokenType = CHAR_LITERAL;
+            }
+            
+            return new Token(tokenType, processed_content);
         }
     }
     
@@ -359,7 +402,12 @@ Token* Lexer::readTokenDFA(FILE* file) {
             if (!lastFinalState.empty()) {
                 // Backtrack to last final state position
                 fseek(file, lastFinalPosition, SEEK_SET);
-                return createToken(lastFinalState, lastFinalValue);
+                Token* token = createToken(lastFinalState, lastFinalValue);
+                if (token == nullptr) {
+                    // It was a comment, recursively get next token
+                    return readTokenDFA(file);
+                }
+                return token;
             } else {
                 printf("ERROR: Unrecognized character '%c' at position %ld\n", input, ftell(file) - 1);
                 exit(1);
@@ -380,10 +428,20 @@ Token* Lexer::readTokenDFA(FILE* file) {
     
     // End of file reached
     if (dfa.isFinalState(currentState)) {
-        return createToken(currentState, tokenValue);
+        Token* token = createToken(currentState, tokenValue);
+        if (token == nullptr) {
+            // It was a comment, recursively get next token
+            return readTokenDFA(file);
+        }
+        return token;
     } else if (!lastFinalState.empty()) {
         fseek(file, lastFinalPosition, SEEK_SET);
-        return createToken(lastFinalState, lastFinalValue);
+        Token* token = createToken(lastFinalState, lastFinalValue);
+        if (token == nullptr) {
+            // It was a comment, recursively get next token
+            return readTokenDFA(file);
+        }
+        return token;
     }
     
     return nullptr;
@@ -423,7 +481,7 @@ vector<Token*> Lexer::lex(FILE* file) {
             // Only report error if we're not at EOF
             int c = fgetc(file);
             if (c != EOF) {
-                printf("ERROR! Unrecognized character: '%c'\n", (char)c);
+                printf("ERROR: Unrecognized character '%c' at position %ld\n", (char)c, ftell(file) - 1);
                 exit(1);
             }
         }

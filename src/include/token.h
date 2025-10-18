@@ -23,9 +23,7 @@ enum Type {
     RPARENTHESIS,
     LBRACKET,
     RBRACKET,
-    RANGE_OPERATOR,
-    COMMENT_START,
-    COMMENT_END
+    RANGE_OPERATOR
 };
 
 class Token {
