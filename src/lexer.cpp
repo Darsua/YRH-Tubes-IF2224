@@ -26,20 +26,20 @@ Lexer::Lexer(LexerMode mode, const string& dfaRulesFile) : mode(mode) {
 
 // Common helper methods
 bool Lexer::isPascalKeyword(const string& word) {
-    return (word == "program" || word == "var" || word == "procedure" || 
-            word == "begin" || word == "end" || word == "if" || word == "then" || 
-            word == "else" || word == "while" || word == "do" || word == "for" ||
-            word == "to" || word == "downto" || word == "integer" || word == "real" ||
-            word == "boolean" || word == "char" || word == "array" || word == "of" ||
-            word == "function" || word == "const" || word == "type");
+    return (word == "program" || word == "variabel" || word == "prosedur" || 
+            word == "mulai" || word == "selesai" || word == "jika" || word == "maka" || 
+            word == "selain-itu" || word == "selama" || word == "lakukan" || word == "untuk" ||
+            word == "ke" || word == "turun-ke" || word == "integer" || word == "real" ||
+            word == "boolean" || word == "char" || word == "larik" || word == "dari" ||
+            word == "fungsi" || word == "konstanta" || word == "tipe" || word == "kasus" || word == "rekaman" || word == "ulangi" || word == "samapai");
 }
 
 bool Lexer::isLogicalOperator(const string& word) {
-    return (word == "and" || word == "or" || word == "not");
+    return (word == "dan" || word == "atau" || word == "tidak");
 }
 
 bool Lexer::isArithmeticOperator(const string& word) {
-    return (word == "div" || word == "mod");
+    return (word == "bagi" || word == "mod");
 }
 
 void Lexer::skipWhitespace(FILE* file) {
