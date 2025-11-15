@@ -28,8 +28,8 @@ Lexer::Lexer(LexerMode mode, const string& dfaRulesFile) : mode(mode) {
 bool Lexer::isPascalKeyword(const string& word) {
     return (word == "program" || word == "variabel" || word == "prosedur" || 
             word == "mulai" || word == "selesai" || word == "jika" || word == "maka" || 
-            word == "selain-itu" || word == "selama" || word == "lakukan" || word == "untuk" ||
-            word == "ke" || word == "turun-ke" || word == "integer" || word == "real" ||
+            word == "selain_itu" || word == "selama" || word == "lakukan" || word == "untuk" ||
+            word == "ke" || word == "turun_ke" || word == "integer" || word == "real" ||
             word == "boolean" || word == "char" || word == "larik" || word == "dari" ||
             word == "fungsi" || word == "konstanta" || word == "tipe" || word == "kasus" || word == "rekaman" || word == "ulangi" || word == "samapai");
 }
