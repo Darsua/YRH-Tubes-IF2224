@@ -38,34 +38,23 @@ private:
     void expect(Type type, const string& errorMsg);
     void expectKeyword(const string& keyword, const string& errorMsg);
     void syntaxError(const string& message);
-    
-    // === 30 NODE SESUAI SPESIFIKASI ===
-    
-    // Program Structure (3)
+
     shared_ptr<ParseNode> parseProgram();
     shared_ptr<ParseNode> parseProgramHeader();
     shared_ptr<ParseNode> parseDeclarationPart();
-    
-    // Declarations (5)
     shared_ptr<ParseNode> parseConstDeclaration();
     shared_ptr<ParseNode> parseTypeDeclaration();
     shared_ptr<ParseNode> parseTypeDefinition();
     shared_ptr<ParseNode> parseVarDeclaration();
     shared_ptr<ParseNode> parseIdentifierList();
-    
-    // Types (5)
     shared_ptr<ParseNode> parseType();
     shared_ptr<ParseNode> parseArrayType();
     shared_ptr<ParseNode> parseRecordType();
     shared_ptr<ParseNode> parseRange();
-    
-    // Subprograms (4)
     shared_ptr<ParseNode> parseSubprogramDeclaration();
     shared_ptr<ParseNode> parseProcedureDeclaration();
     shared_ptr<ParseNode> parseFunctionDeclaration();
     shared_ptr<ParseNode> parseFormalParameterList();
-    
-    // Statements (7)
     shared_ptr<ParseNode> parseCompoundStatement();
     shared_ptr<ParseNode> parseStatementList();
     shared_ptr<ParseNode> parseAssignmentStatement();
@@ -73,15 +62,11 @@ private:
     shared_ptr<ParseNode> parseWhileStatement();
     shared_ptr<ParseNode> parseForStatement();
     shared_ptr<ParseNode> parseProcedureFunctionCall();
-    
-    // Parameters & Expressions (5)
     shared_ptr<ParseNode> parseParameterList();
     shared_ptr<ParseNode> parseExpression();
     shared_ptr<ParseNode> parseSimpleExpression();
     shared_ptr<ParseNode> parseTerm();
     shared_ptr<ParseNode> parseFactor();
-    
-    // Operators (3)
     shared_ptr<ParseNode> parseRelationalOperator();
     shared_ptr<ParseNode> parseAdditiveOperator();
     shared_ptr<ParseNode> parseMultiplicationOperator();
