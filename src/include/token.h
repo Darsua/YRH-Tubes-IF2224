@@ -36,6 +36,7 @@ public:
     string toString() const;
     string getValue() const;
     string getTypeName() const;
+    Type getType() const;
 };
 
 #endif // TOKEN_H
