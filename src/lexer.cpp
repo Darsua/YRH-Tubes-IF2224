@@ -11,7 +11,6 @@
 
 using namespace std;
 
-// Constructor
 Lexer::Lexer(LexerMode mode, const string& dfaRulesFile) : mode(mode) {
     if (mode == DFA_MODE) {
         if (!dfa.loadDFAFromFile(dfaRulesFile)) {
@@ -24,14 +23,13 @@ Lexer::Lexer(LexerMode mode, const string& dfaRulesFile) : mode(mode) {
     }
 }
 
-// Common helper methods
 bool Lexer::isPascalKeyword(const string& word) {
     return (word == "program" || word == "variabel" || word == "prosedur" || 
             word == "mulai" || word == "selesai" || word == "jika" || word == "maka" || 
             word == "selain_itu" || word == "selama" || word == "lakukan" || word == "untuk" ||
             word == "ke" || word == "turun_ke" || word == "integer" || word == "real" ||
             word == "boolean" || word == "char" || word == "larik" || word == "dari" ||
-            word == "fungsi" || word == "konstanta" || word == "tipe" || word == "kasus" || word == "rekaman" || word == "ulangi" || word == "samapai");
+            word == "fungsi" || word == "konstanta" || word == "tipe" || word == "kasus" || word == "rekaman" || word == "ulangi" || word == "sampai");
 }
 
 bool Lexer::isLogicalOperator(const string& word) {
@@ -52,13 +50,11 @@ void Lexer::skipWhitespace(FILE* file) {
     }
 }
 
-// Helper method to skip brace comments { ... }
 void Lexer::skipBraceComment(FILE* file) {
     int c;
     while ((c = fgetc(file)) != EOF && c != '}') {
-        // Just consume characters until closing brace
+        // Do nothing, just keep c o n s u m i n g.
     }
-    // No need to put back the closing brace - it's consumed
 }
 
 // Helper method to skip parenthesis comments (* ... *)

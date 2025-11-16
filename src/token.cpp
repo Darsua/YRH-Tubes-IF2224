@@ -12,6 +12,10 @@ string Token::getValue() const {
     return value;
 }
 
+Type Token::getType() const {
+    return type;
+}
+
 string Token::getTypeName() const {
     switch(type) {
         case KEYWORD: return "KEYWORD";

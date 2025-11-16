@@ -4,6 +4,7 @@
 #include <vector>
 #include <chrono>
 #include "include/lexer.h"
+#include "include/parser.h"
 
 using namespace std;
 
@@ -13,6 +14,7 @@ void print_usage(const char* program_name) {
     cout << "  -s, --switch    Use switch-based lexer instead of DFA" << endl;
     cout << "  -l, --lexicon   Specify custom DFA rules file (default: rules/lexicon.dfa)" << endl;
     cout << "  -t, --time      Show timing information" << endl;
+    cout << "  -p, --parse     Enable parser (syntax analysis)" << endl;
     cout << "  -h, --help      Show this help message" << endl;
 }
 
@@ -24,10 +26,11 @@ int main(int argc, char* argv[]) {
     
     bool show_time = false;
     bool use_switch = false;
+    bool lexer_only = false;
     const char* input_file = nullptr;
     const char* dfa_rules_file = nullptr;
     
-    // Parse command line arguments
+    // PARSE ARGUMEN
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--switch") == 0) {
             use_switch = true;
@@ -40,6 +43,8 @@ int main(int argc, char* argv[]) {
             dfa_rules_file = argv[++i];
         } else if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--time") == 0) {
             show_time = true;
+        } else if (strcmp(argv[i], "-p") == 0 || strcmp(argv[i], "--lexer") == 0) {
+            lexer_only = true;
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             print_usage(argv[0]);
             return 0;
@@ -63,7 +68,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    // Show which lexer mode is being used
+    // PILIH MODE
     cout << "Using " << (use_switch ? "switch-based" : "DFA-based") << " lexer" << endl;
     if (!use_switch) {
         cout << "DFA rules file: " << (dfa_rules_file ? dfa_rules_file : "rules/pascal_lexicon.dfa") << endl;
@@ -94,7 +99,40 @@ int main(int argc, char* argv[]) {
              << duration.count() / 1000.0 << " milliseconds)" << endl;
     }
     
-    // Cleanup
+    // PARSING
+    if (!lexer_only) {
+        cout << "----------------------------------------" << endl;
+        cout << "Starting syntax analysis..." << endl;
+        cout << "----------------------------------------" << endl;
+        
+        try {
+            auto parse_start = std::chrono::high_resolution_clock::now();
+            Parser parser(tokens);
+            auto parseTree = parser.parse();
+            auto parse_end = std::chrono::high_resolution_clock::now();
+            
+            cout << "----------------------------------------" << endl;
+            cout << "Parse Tree:" << endl;
+            cout << "----------------------------------------" << endl;
+            parseTree->print();
+            
+            cout << "----------------------------------------" << endl;
+            cout << "Syntax analysis completed successfully!" << endl;
+            
+            if (show_time) {
+                auto parse_duration = std::chrono::duration_cast<std::chrono::microseconds>(parse_end - parse_start);
+                cout << "Syntax analysis completed in " << parse_duration.count() << " microseconds ("
+                     << parse_duration.count() / 1000.0 << " milliseconds)" << endl;
+            }
+        } catch (const exception& e) {
+            cerr << "Parser error: " << e.what() << endl;
+                        for (Token* token : tokens) {
+                delete token;
+            }
+            return 1;
+        }
+    }
+    
     for (Token* token : tokens) {
         delete token;
     }
