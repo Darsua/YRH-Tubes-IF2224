@@ -424,13 +424,18 @@ shared_ptr<ParseNode> Parser::parseType() {
     } else if (matchKeyword("rekaman")) {
         auto recordType = parseRecordType();
         node->addChild(recordType);
-    } else if (match(NUMBER) || match(CHAR_LITERAL)) {
+    } else if (match(NUMBER) || match(CHAR_LITERAL) || match(IDENTIFIER)) {
         Token* next = peek();
         if (next && next->getType() == RANGE_OPERATOR) {
             auto subrangeType = parseRange();
             node->addChild(subrangeType);
-        } else {
+        } else if (match(NUMBER) || match(CHAR_LITERAL)) {
             syntaxError("Unexpected number or character literal in type declaration");
+        } else {
+            Token* token = currentToken();
+            auto customType = make_shared<ParseNode>("custom-type", token->getValue());
+            node->addChild(customType);
+            advance();
         }
     } else {
         Token* token = currentToken();
@@ -444,10 +449,6 @@ shared_ptr<ParseNode> Parser::parseType() {
             } else {
                 syntaxError("Expected type (integer, real, boolean, char)");
             }
-        } else if (match(IDENTIFIER)) {
-            auto customType = make_shared<ParseNode>("custom-type", token->getValue());
-            node->addChild(customType);
-            advance();
         } else {
             syntaxError("Expected type");
         }
@@ -530,42 +531,20 @@ shared_ptr<ParseNode> Parser::parseRecordType() {
     return node;
 }
 
-// Grammar: <range> -> (NUMBER|CHAR_LITERAL) RANGE_OPERATOR(..) (NUMBER|CHAR_LITERAL)
+// Grammar: <range> -> <expression> + RANGE_OPERATOR(..) + <expression>
 shared_ptr<ParseNode> Parser::parseRange() {
     auto node = make_shared<ParseNode>("range");
     
-    Token* token = currentToken();
-    if (match(NUMBER)) {
-        auto lowerNode = make_shared<ParseNode>("NUMBER", token->getValue());
-        node->addChild(lowerNode);
-        advance();
-    } else if (match(CHAR_LITERAL)) {
-        auto lowerNode = make_shared<ParseNode>("CHAR_LITERAL", token->getValue());
-        node->addChild(lowerNode);
-        advance();
-    } else {
-        syntaxError("Expected number or character literal in range");
-        return node;
-    }
+    auto lowerExpr = parseExpression();
+    node->addChild(lowerExpr);
     
     Token* rangeToken = currentToken();
     expect(RANGE_OPERATOR, "Expected '..' in range");
     auto rangeOpNode = make_shared<ParseNode>("RANGE_OPERATOR", rangeToken->getValue());
     node->addChild(rangeOpNode);
     
-    token = currentToken();
-    if (match(NUMBER)) {
-        auto upperNode = make_shared<ParseNode>("NUMBER", token->getValue());
-        node->addChild(upperNode);
-        advance();
-    } else if (match(CHAR_LITERAL)) {
-        auto upperNode = make_shared<ParseNode>("CHAR_LITERAL", token->getValue());
-        node->addChild(upperNode);
-        advance();
-    } else {
-        syntaxError("Expected number or character literal in range");
-        return node;
-    }
+    auto upperExpr = parseExpression();
+    node->addChild(upperExpr);
     
     return node;
 }
@@ -802,11 +781,15 @@ shared_ptr<ParseNode> Parser::parseStatementList() {
             break;
         }
         
-        if (!isProcedureCall && match(SEMICOLON)) {
-            Token* semiToken = currentToken();
-            auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue());
-            node->addChild(semiNode);
-            advance();
+        if (!matchKeyword("selesai") && currentToken()) {
+            if (!isProcedureCall) {
+                Token* semiToken = currentToken();
+                expect(SEMICOLON, "Expected ';' after statement");
+                if (semiToken && semiToken->getType() == SEMICOLON) {
+                    auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue());
+                    node->addChild(semiNode);
+                }
+            }
         }
     }
     
@@ -1232,46 +1215,48 @@ shared_ptr<ParseNode> Parser::parseFactor() {
         node->addChild(idNode);
         advance();
         
-        while (match(DOT)) {
-            Token* nextToken = peek();
-
-            if (nextToken && nextToken->getType() == DOT) {
-                break; // range operator not record access
+        bool continueLoop = true;
+        while (continueLoop) {
+            if (match(DOT)) {
+                Token* nextToken = peek();
+                if (nextToken && nextToken->getType() == DOT) {
+                    break; // range operator not record access
+                }
+                
+                Token* dotToken = currentToken();
+                auto dotNode = make_shared<ParseNode>("DOT", dotToken->getValue());
+                node->addChild(dotNode);
+                advance();
+                
+                token = currentToken();
+                if (!match(IDENTIFIER)) {
+                    syntaxError("Expected field name after '.'");
+                    break;
+                }
+                
+                auto fieldNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+                node->addChild(fieldNode);
+                advance();
+            } else if (match(LBRACKET)) {
+                Token* lbracketToken = currentToken();
+                auto lbracketNode = make_shared<ParseNode>("LBRACKET", lbracketToken->getValue());
+                node->addChild(lbracketNode);
+                advance();
+                
+                auto indexExpr = parseExpression();
+                node->addChild(indexExpr);
+                
+                Token* rbracketToken = currentToken();
+                expect(RBRACKET, "Expected ']' after array index");
+                auto rbracketNode = make_shared<ParseNode>("RBRACKET", rbracketToken->getValue());
+                node->addChild(rbracketNode);
+            } else if (match(LPARENTHESIS)) {
+                auto paramList = parseParameterList();
+                node->addChild(paramList);
+                continueLoop = false;
+            } else {
+                continueLoop = false;
             }
-            
-            Token* dotToken = currentToken();
-            auto dotNode = make_shared<ParseNode>("DOT", dotToken->getValue());
-            node->addChild(dotNode);
-            advance();
-            
-            token = currentToken();
-            if (!match(IDENTIFIER)) {
-                syntaxError("Expected field name after '.'");
-                break;
-            }
-            
-            auto fieldNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
-            node->addChild(fieldNode);
-            advance();
-        }
-        
-        while (match(LBRACKET)) {
-            Token* lbracketToken = currentToken();
-            auto lbracketNode = make_shared<ParseNode>("LBRACKET", lbracketToken->getValue());
-            node->addChild(lbracketNode);
-            advance();
-            
-            auto indexExpr = parseExpression();
-            node->addChild(indexExpr);
-            
-            Token* rbracketToken = currentToken();
-            expect(RBRACKET, "Expected ']' after array index");
-            auto rbracketNode = make_shared<ParseNode>("RBRACKET", rbracketToken->getValue());
-            node->addChild(rbracketNode);
-        }
-        if (match(LPARENTHESIS)) {
-            auto paramList = parseParameterList();
-            node->addChild(paramList);
         }
     } else if (match(NUMBER)) {
         string numValue = token->getValue();
