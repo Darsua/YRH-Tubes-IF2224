@@ -156,7 +156,7 @@ shared_ptr<ParseNode> Parser::parse() {
     return parseTree;
 }
 
-// Grammar: <program> -> <program-header> <declaration-part> <compound-statement> DOT
+// Grammar: <program> -> <program-header> + <declaration-part> + <compound-statement> + DOT
 shared_ptr<ParseNode> Parser::parseProgram() {
     auto node = make_shared<ParseNode>("program");
     
@@ -177,7 +177,7 @@ shared_ptr<ParseNode> Parser::parseProgram() {
     return node;
 }
 
-// Grammar: <program-header> -> KEYWORD(program) IDENTIFIER SEMICOLON
+// Grammar: <program-header> -> KEYWORD(program) + IDENTIFIER + SEMICOLON
 shared_ptr<ParseNode> Parser::parseProgramHeader() {
     auto node = make_shared<ParseNode>("program-header");
     
@@ -203,7 +203,7 @@ shared_ptr<ParseNode> Parser::parseProgramHeader() {
     return node;
 }
 
-// Grammar: <declaration-part> -> <const-declaration>? <type-declaration>? <var-declaration>? <subprogram-declaration>*
+// Grammar: <declaration-part> -> <const-declaration>* + <type-declaration>* + <var-declaration>* + <subprogram-declaration>*
 shared_ptr<ParseNode> Parser::parseDeclarationPart() {
     auto node = make_shared<ParseNode>("declaration-part");
     
@@ -230,11 +230,14 @@ shared_ptr<ParseNode> Parser::parseDeclarationPart() {
     return node;
 }
 
-// Grammar: <const-declaration> -> KEYWORD(konstanta) (IDENTIFIER RELATIONAL_OPERATOR(=) <constant-value> SEMICOLON)+
+// Grammar: <const-declaration> -> KEYWORD(konstanta) + (IDENTIFIER RELATIONAL_OPERATOR(=) <constant-value> + SEMICOLON)+
 shared_ptr<ParseNode> Parser::parseConstDeclaration() {
     auto node = make_shared<ParseNode>("const-declaration");
     
+    Token* constToken = currentToken();
     expectKeyword("konstanta", "Expected 'konstanta'");
+    auto constNode = make_shared<ParseNode>("KEYWORD", constToken->getValue());
+    node->addChild(constNode);
     
     do {
         Token* token = currentToken();
@@ -296,11 +299,14 @@ shared_ptr<ParseNode> Parser::parseConstDeclaration() {
     return node;
 }
 
-// Grammar: <type-declaration> -> KEYWORD(tipe) (<type-definition>)+
+// Grammar: <type-declaration> -> KEYWORD(tipe) + (<type-definition>)+
 shared_ptr<ParseNode> Parser::parseTypeDeclaration() {
     auto node = make_shared<ParseNode>("type-declaration");
     
+    Token* typeToken = currentToken();
     expectKeyword("tipe", "Expected 'tipe'");
+    auto typeNode = make_shared<ParseNode>("KEYWORD", typeToken->getValue());
+    node->addChild(typeNode);
     
     do {
         auto typeDef = parseTypeDefinition();
@@ -311,7 +317,7 @@ shared_ptr<ParseNode> Parser::parseTypeDeclaration() {
     return node;
 }
 
-// Grammar: <type-definition> -> IDENTIFIER RELATIONAL_OPERATOR(=) <type> SEMICOLON
+// Grammar: <type-definition> -> IDENTIFIER RELATIONAL_OPERATOR(=) <type> + SEMICOLON
 shared_ptr<ParseNode> Parser::parseTypeDefinition() {
     auto node = make_shared<ParseNode>("type-definition");
     
@@ -341,7 +347,7 @@ shared_ptr<ParseNode> Parser::parseTypeDefinition() {
     return node;
 }
 
-// Grammar: <var-declaration> -> KEYWORD(variabel) (<identifier-list> COLON <type> SEMICOLON)+
+// Grammar: <var-declaration> -> KEYWORD(variabel) (<identifier-list> + COLON + <type> + SEMICOLON)+
 shared_ptr<ParseNode> Parser::parseVarDeclaration() {
     auto node = make_shared<ParseNode>("var-declaration");
     
@@ -374,7 +380,7 @@ shared_ptr<ParseNode> Parser::parseVarDeclaration() {
     return node;
 }
 
-// Grammar: <identifier-list> -> IDENTIFIER (COMMA IDENTIFIER)*
+// Grammar: <identifier-list> -> IDENTIFIER (COMMA + IDENTIFIER)*
 shared_ptr<ParseNode> Parser::parseIdentifierList() {
     auto node = make_shared<ParseNode>("identifier-list");
     
@@ -450,7 +456,7 @@ shared_ptr<ParseNode> Parser::parseType() {
     return node;
 }
 
-// Grammar: <array-type> -> KEYWORD(larik) LBRACKET <range> RBRACKET KEYWORD(dari) <type>
+// Grammar: <array-type> -> KEYWORD(larik) + LBRACKET + <range> + RBRACKET + KEYWORD(dari) + <type>
 shared_ptr<ParseNode> Parser::parseArrayType() {
     auto node = make_shared<ParseNode>("array-type");
     
@@ -485,7 +491,7 @@ shared_ptr<ParseNode> Parser::parseArrayType() {
     return node;
 }
 
-// Grammar: <record-type> -> KEYWORD(rekaman) (<identifier-list> COLON <type> SEMICOLON)+ KEYWORD(selesai)
+// Grammar: <record-type> -> KEYWORD(rekaman) + (<identifier-list> + COLON + <type> + SEMICOLON)+ KEYWORD(selesai)
 shared_ptr<ParseNode> Parser::parseRecordType() {
     auto node = make_shared<ParseNode>("record-type");
     
@@ -581,7 +587,7 @@ shared_ptr<ParseNode> Parser::parseSubprogramDeclaration() {
     return node;
 }
 
-// Grammar: <procedure-declaration> -> KEYWORD(prosedur) IDENTIFIER (<formal-parameter-list>)? SEMICOLON <declaration-part> <compound-statement> SEMICOLON
+// Grammar: <procedure-declaration> -> KEYWORD(prosedur) + IDENTIFIER + (<formal-parameter-list>)? + SEMICOLON + <declaration-part> + <compound-statement> + SEMICOLON
 shared_ptr<ParseNode> Parser::parseProcedureDeclaration() {
     auto node = make_shared<ParseNode>("procedure-declaration");
     
@@ -623,7 +629,7 @@ shared_ptr<ParseNode> Parser::parseProcedureDeclaration() {
     return node;
 }
 
-// Grammar: <function-declaration> -> KEYWORD(fungsi) IDENTIFIER (<formal-parameter-list>)? COLON <type> SEMICOLON <declaration-part> <compound-statement> SEMICOLON
+// Grammar: <function-declaration> -> KEYWORD(fungsi) + IDENTIFIER + (<formal-parameter-list>)? + COLON + <type> + SEMICOLON + <declaration-part> + <compound-statement> + SEMICOLON
 shared_ptr<ParseNode> Parser::parseFunctionDeclaration() {
     auto node = make_shared<ParseNode>("function-declaration");
     
@@ -673,7 +679,7 @@ shared_ptr<ParseNode> Parser::parseFunctionDeclaration() {
     return node;
 }
 
-// Grammar: <formal-parameter-list> -> LPARENTHESIS (<identifier-list> COLON <type> (SEMICOLON <identifier-list> COLON <type>)*)? RPARENTHESIS
+// Grammar: <formal-parameter-list> -> LPARENTHESIS + (<identifier-list> + COLON + <type> + (SEMICOLON + <identifier-list> + COLON + <type>)*)? + RPARENTHESIS
 shared_ptr<ParseNode> Parser::parseFormalParameterList() {
     auto node = make_shared<ParseNode>("formal-parameter-list");
     
@@ -714,7 +720,7 @@ shared_ptr<ParseNode> Parser::parseFormalParameterList() {
     return node;
 }
 
-// Grammar: <compound-statement> -> KEYWORD(mulai) <statement-list> KEYWORD(selesai)
+// Grammar: <compound-statement> -> KEYWORD(mulai) + <statement-list> + KEYWORD(selesai)
 shared_ptr<ParseNode> Parser::parseCompoundStatement() {
     auto node = make_shared<ParseNode>("compound-statement");
     
@@ -734,7 +740,7 @@ shared_ptr<ParseNode> Parser::parseCompoundStatement() {
     return node;
 }
 
-// Grammar: <statement-list> -> <statement> (SEMICOLON <statement>)*
+// Grammar: <statement-list> -> <assignment-statement> | <if-statement> | <while-statement> | <for-statement> | <procedure-call> | <compound-statement> + (SEMICOLON + <assignment-statement> | <if-statement> | <while-statement> | <for-statement> | <procedure-call> | <compound-statement>)*
 shared_ptr<ParseNode> Parser::parseStatementList() {
     auto node = make_shared<ParseNode>("statement-list");
     
@@ -754,11 +760,8 @@ shared_ptr<ParseNode> Parser::parseStatementList() {
             auto stmt = parseCompoundStatement();
             node->addChild(stmt);
         } else if (match(IDENTIFIER)) {
-            
-            
             size_t lookahead = currentPos + 1;
             bool foundAssign = false;
-            
             
             while (lookahead < tokens.size() && tokens[lookahead]->getType() == DOT) {
                 lookahead++; // skip DOT
@@ -772,9 +775,8 @@ shared_ptr<ParseNode> Parser::parseStatementList() {
                 }
             }
             
-            
             while (lookahead < tokens.size() && tokens[lookahead]->getType() == LBRACKET) {
-                lookahead++; // skip [
+                lookahead++; // skip LBRACKET
                 
                 int bracketDepth = 1;
                 while (lookahead < tokens.size() && bracketDepth > 0) {
@@ -783,7 +785,6 @@ shared_ptr<ParseNode> Parser::parseStatementList() {
                     lookahead++;
                 }
             }
-            
             
             if (lookahead < tokens.size() && tokens[lookahead]->getType() == ASSIGN_OPERATOR) {
                 foundAssign = true;
@@ -795,7 +796,7 @@ shared_ptr<ParseNode> Parser::parseStatementList() {
             } else {
                 auto stmt = parseProcedureFunctionCall();
                 node->addChild(stmt);
-                isProcedureCall = true; // Procedure call already used SEMICOLON
+                isProcedureCall = true;
             }
         } else {
             break;
@@ -868,7 +869,7 @@ shared_ptr<ParseNode> Parser::parseAssignmentStatement() {
     return node;
 }
 
-// Grammar: <if-statement> -> KEYWORD(jika) <expression> KEYWORD(maka) <statement> (KEYWORD(selain_itu) <statement>)?
+// Grammar: <if-statement> -> KEYWORD(jika) + <expression> + KEYWORD(maka) + <assignment-statement> | <procedure-call> | <compound-statement> + (KEYWORD(selain_itu) + <assignment-statement> | <procedure-call> | <compound-statement>)?
 shared_ptr<ParseNode> Parser::parseIfStatement() {
     auto node = make_shared<ParseNode>("if-statement");
     
@@ -931,7 +932,7 @@ shared_ptr<ParseNode> Parser::parseIfStatement() {
     return node;
 }
 
-// Grammar: <while-statement> -> KEYWORD(selama) <expression> KEYWORD(lakukan) <statement>
+// Grammar: <while-statement> -> KEYWORD(selama) + <expression> + KEYWORD(lakukan) + (<compound-statement> | <assignment-statement> | <procedure-call>)
 shared_ptr<ParseNode> Parser::parseWhileStatement() {
     auto node = make_shared<ParseNode>("while-statement");
     
@@ -985,7 +986,7 @@ shared_ptr<ParseNode> Parser::parseWhileStatement() {
     return node;
 }
 
-// Grammar: <for-statement> -> KEYWORD(untuk) IDENTIFIER ASSIGN_OPERATOR <expression> (KEYWORD(ke)|KEYWORD(turun_ke)) <expression> KEYWORD(lakukan) <statement>
+// Grammar: <for-statement> -> KEYWORD(untuk) + IDENTIFIER ASSIGN_OPERATOR <expression> + (KEYWORD(ke) | KEYWORD(turun_ke)) + <expression>  + KEYWORD(lakukan) + <compound-statement> | <assignment-statement> | <procedure-call>
 shared_ptr<ParseNode> Parser::parseForStatement() {
     auto node = make_shared<ParseNode>("for-statement");
     
@@ -1071,7 +1072,7 @@ shared_ptr<ParseNode> Parser::parseForStatement() {
     return node;
 }
 
-// Grammar: <procedure/function-call> -> IDENTIFIER (LPARENTHESIS <parameter-list> RPARENTHESIS)? (SEMICOLON)?
+// Grammar: <procedure/function-call> -> IDENTIFIER + (LPARENTHESIS + <parameter-list> + RPARENTHESIS)? + (SEMICOLON)?
 shared_ptr<ParseNode> Parser::parseProcedureFunctionCall() {
     auto node = make_shared<ParseNode>("procedure-call");
     
@@ -1109,7 +1110,7 @@ shared_ptr<ParseNode> Parser::parseProcedureFunctionCall() {
     return node;
 }
 
-// Grammar: <parameter-list> -> LPARENTHESIS (<expression> (COMMA <expression>)*)? RPARENTHESIS
+// Grammar: <parameter-list> -> LPARENTHESIS + (<expression> + (COMMA <expression>)*)? + RPARENTHESIS
 shared_ptr<ParseNode> Parser::parseParameterList() {
     auto node = make_shared<ParseNode>("parameter-list");
     
@@ -1135,7 +1136,7 @@ shared_ptr<ParseNode> Parser::parseParameterList() {
     return node;
 }
 
-// Grammar: <expression> -> <simple-expression> (RELATIONAL_OPERATOR <simple-expression>)?
+// Grammar: <expression> -> <simple-expression> + (RELATIONAL_OPERATOR + <simple-expression>)?
 shared_ptr<ParseNode> Parser::parseExpression() {
     auto node = make_shared<ParseNode>("expression");
     
@@ -1153,7 +1154,7 @@ shared_ptr<ParseNode> Parser::parseExpression() {
     return node;
 }
 
-// Grammar: <simple-expression> -> (ARITHMETIC_OPERATOR(+|-))? <term> ((ARITHMETIC_OPERATOR(+|-)|LOGICAL_OPERATOR(atau)) <term>)*
+// Grammar: <simple-expression> -> (ARITHMETIC_OPERATOR(+|-))? <term> (<additive-operator> <term>)*
 shared_ptr<ParseNode> Parser::parseSimpleExpression() {
     auto node = make_shared<ParseNode>("simple-expression");
 
@@ -1188,7 +1189,7 @@ shared_ptr<ParseNode> Parser::parseSimpleExpression() {
     return node;
 }
 
-// Grammar: <term> -> <factor> ((ARITHMETIC_OPERATOR(*|/|bagi|mod)|LOGICAL_OPERATOR(dan)) <factor>)*
+// Grammar: <term> -> <factor> (<multiplicative-operator> <factor>)*
 shared_ptr<ParseNode> Parser::parseTerm() {
     auto node = make_shared<ParseNode>("term");
     
