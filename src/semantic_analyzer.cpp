@@ -94,27 +94,127 @@ void SemanticAnalyzer::visitVarDecl(VarDeclNode* node) {
     int idx = symbolTable.addSymbol(entry);
     if (idx < 0) {
         addError("Variable '" + node->getName() + "' already declared");
+    } else {
+        // Decorate the AST node with symbol table information
+        node->setSymbolTableIndex(idx);
+        node->setScopeLevel(currentLevel);
     }
 }
 
 void SemanticAnalyzer::visitConstDecl(ConstDeclNode* node) {
-    if (node && node->getValue()) {
+    if (!node) return;
+    
+    // Add constant to symbol table
+    TabEntry entry;
+    entry.identifier = node->getName();
+    entry.obj = static_cast<int>(ObjectClass::CONSTANT);
+    
+    // Process the constant value first to determine type
+    if (node->getValue()) {
         node->getValue()->accept(this);
+        DataType constType = node->getValue()->getDataType();
+        
+        if (constType == DataType::INTEGER) entry.typ = static_cast<int>(TypeCode::INTS);
+        else if (constType == DataType::REAL) entry.typ = static_cast<int>(TypeCode::REALS);
+        else if (constType == DataType::BOOLEAN) entry.typ = static_cast<int>(TypeCode::BOOLS);
+        else if (constType == DataType::CHAR) entry.typ = static_cast<int>(TypeCode::CHARS);
+        else entry.typ = static_cast<int>(TypeCode::NOTYP);
+    } else {
+        entry.typ = static_cast<int>(TypeCode::NOTYP);
+    }
+    
+    entry.ref = 0;
+    entry.nrm = 1;
+    entry.lev = currentLevel;
+    entry.adr = 0;
+    entry.link = 0;
+    
+    int idx = symbolTable.addSymbol(entry);
+    if (idx < 0) {
+        addError("Constant '" + node->getName() + "' already declared");
+    } else {
+        // Decorate the AST node with symbol table information
+        node->setSymbolTableIndex(idx);
+        node->setScopeLevel(currentLevel);
     }
 }
 
 void SemanticAnalyzer::visitTypeDecl(TypeDeclNode* node) {
     if (!node) return;
-    // Type declaration processed
+    
+    // Add type to symbol table
+    TabEntry entry;
+    entry.identifier = node->getName();
+    entry.obj = static_cast<int>(ObjectClass::TYPE);
+    
+    // Map DataType to TypeCode
+    DataType typeKind = node->getTypeKind();
+    if (typeKind == DataType::INTEGER) entry.typ = static_cast<int>(TypeCode::INTS);
+    else if (typeKind == DataType::REAL) entry.typ = static_cast<int>(TypeCode::REALS);
+    else if (typeKind == DataType::BOOLEAN) entry.typ = static_cast<int>(TypeCode::BOOLS);
+    else if (typeKind == DataType::CHAR) entry.typ = static_cast<int>(TypeCode::CHARS);
+    else if (typeKind == DataType::ARRAY) entry.typ = static_cast<int>(TypeCode::ARRAYS);
+    else if (typeKind == DataType::RECORD) entry.typ = static_cast<int>(TypeCode::RECORDS);
+    else entry.typ = static_cast<int>(TypeCode::NOTYP);
+    
+    entry.ref = 0;
+    entry.nrm = 1;
+    entry.lev = currentLevel;
+    entry.adr = 0;
+    entry.link = 0;
+    
+    int idx = symbolTable.addSymbol(entry);
+    if (idx < 0) {
+        addError("Type '" + node->getName() + "' already declared");
+    } else {
+        // Decorate the AST node with symbol table information
+        node->setSymbolTableIndex(idx);
+        node->setScopeLevel(currentLevel);
+    }
+    
+    // Process the type definition (array or record)
+    if (node->getTypeDefinition()) {
+        node->getTypeDefinition()->accept(this);
+    }
 }
 
 void SemanticAnalyzer::visitArrayType(ArrayTypeNode* node) {
-    // Array type processed
+    if (!node) return;
+    
+    // Add array type information to ATAB
+    AtabEntry arrayEntry;
+    arrayEntry.xtyp = static_cast<int>(TypeCode::ARRAYS);
+    
+    // Map element type
+    DataType elemType = node->getElementType();
+    if (elemType == DataType::INTEGER) arrayEntry.etyp = static_cast<int>(TypeCode::INTS);
+    else if (elemType == DataType::REAL) arrayEntry.etyp = static_cast<int>(TypeCode::REALS);
+    else if (elemType == DataType::BOOLEAN) arrayEntry.etyp = static_cast<int>(TypeCode::BOOLS);
+    else if (elemType == DataType::CHAR) arrayEntry.etyp = static_cast<int>(TypeCode::CHARS);
+    else arrayEntry.etyp = static_cast<int>(TypeCode::NOTYP);
+    
+    arrayEntry.eref = 0;
+    arrayEntry.low = node->getLowBound();
+    arrayEntry.high = node->getHighBound();
+    arrayEntry.elsz = 1;  // Simplified - would need proper size calculation
+    arrayEntry.size = (node->getHighBound() - node->getLowBound() + 1) * arrayEntry.elsz;
+    
+    int atab_idx = symbolTable.addArray(arrayEntry);
+    node->setArrayTableIndex(atab_idx);
+    node->setScopeLevel(currentLevel);
 }
 
 void SemanticAnalyzer::visitRecordType(RecordTypeNode* node) {
+    if (!node) return;
+    
+    // Set scope level for record type
+    node->setScopeLevel(currentLevel);
+    
+    // Process all fields
     for (auto& field : node->getFields()) {
-        field->accept(this);
+        if (field) {
+            field->accept(this);
+        }
     }
 }
 
@@ -132,7 +232,14 @@ void SemanticAnalyzer::visitProcedureDecl(ProcedureDeclNode* node) {
     entry.adr = 0;
     entry.link = 0;
     
-    symbolTable.addSymbol(entry);
+    int idx = symbolTable.addSymbol(entry);
+    if (idx < 0) {
+        addError("Procedure '" + node->getName() + "' already declared");
+    } else {
+        // Decorate the AST node with symbol table information
+        node->setSymbolTableIndex(idx);
+        node->setScopeLevel(currentLevel);
+    }
     
     // Enter procedure scope
     int savedLevel = currentLevel;
@@ -181,7 +288,15 @@ void SemanticAnalyzer::visitFunctionDecl(FunctionDeclNode* node) {
     entry.adr = 0;
     entry.link = 0;
     
-    symbolTable.addSymbol(entry);
+    int idx = symbolTable.addSymbol(entry);
+    if (idx < 0) {
+        addError("Function '" + node->getName() + "' already declared");
+    } else {
+        // Decorate the AST node with symbol table information
+        node->setSymbolTableIndex(idx);
+        node->setScopeLevel(currentLevel);
+        node->setDataType(retType);
+    }
     
     // Enter function scope
     int savedLevel = currentLevel;
@@ -249,14 +364,38 @@ void SemanticAnalyzer::visitFor(ForNode* node) {
 }
 
 void SemanticAnalyzer::visitProcCall(ProcCallNode* node) {
+    if (!node) return;
+    
     auto* symbol = symbolTable.lookupSymbol(node->getName());
-    if (symbol) {
-        // Symbol found - just mark it
-        node->setSymbolTableIndex(0);  // Simplified
+    if (!symbol) {
+        addError("Procedure/Function '" + node->getName() + "' not declared");
+        node->setSymbolTableIndex(-1);
+        node->setScopeLevel(currentLevel);
+    } else {
+        // Check if it's actually a procedure or function
+        if (symbol->obj != static_cast<int>(ObjectClass::PROCEDURE) && 
+            symbol->obj != static_cast<int>(ObjectClass::FUNCTION)) {
+            addError("'" + node->getName() + "' is not a procedure or function");
+        }
+        
+        // Decorate the AST node with actual symbol table index
+        // We need to find the actual index in the table
+        int symIdx = -1;
+        for (size_t i = 0; i < symbolTable.getTabSize(); i++) {
+            const TabEntry* entry = symbolTable.getSymbol(i);
+            if (entry && entry->identifier == node->getName()) {
+                symIdx = i;
+                break;
+            }
+        }
+        
+        node->setSymbolTableIndex(symIdx);
+        node->setScopeLevel(symbol->lev);
     }
     
+    // Process arguments
     for (auto& arg : node->getArguments()) {
-        arg->accept(this);
+        if (arg) arg->accept(this);
     }
 }
 
@@ -303,10 +442,14 @@ void SemanticAnalyzer::visitBool(BoolNode* node) {
 }
 
 void SemanticAnalyzer::visitVar(VarNode* node) {
+    if (!node) return;
+    
     auto* symbol = symbolTable.lookupSymbol(node->getName());
     if (!symbol) {
         addError("Variable '" + node->getName() + "' not declared");
         node->setDataType(DataType::UNKNOWN);
+        node->setSymbolTableIndex(-1);
+        node->setScopeLevel(currentLevel);
         return;
     }
     
@@ -320,20 +463,60 @@ void SemanticAnalyzer::visitVar(VarNode* node) {
         default: type = DataType::UNKNOWN; break;
     }
     
+    // Find the actual index in the symbol table
+    int symIdx = -1;
+    for (size_t i = 0; i < symbolTable.getTabSize(); i++) {
+        const TabEntry* entry = symbolTable.getSymbol(i);
+        if (entry && entry->identifier == node->getName()) {
+            symIdx = i;
+            break;
+        }
+    }
+    
     node->setDataType(type);
-    node->setSymbolTableIndex(0);  // Simplified
+    node->setSymbolTableIndex(symIdx);
     node->setScopeLevel(symbol->lev);
 }
 
 void SemanticAnalyzer::visitArrayAccess(ArrayAccessNode* node) {
     if (!node) return;
-    if (node->getArrayVar()) node->getArrayVar()->accept(this);
-    if (node->getIndex()) node->getIndex()->accept(this);
+    
+    // Process the array variable
+    if (node->getArrayVar()) {
+        node->getArrayVar()->accept(this);
+        
+        // Inherit scope level from array variable
+        node->setScopeLevel(node->getArrayVar()->getScopeLevel());
+        node->setSymbolTableIndex(node->getArrayVar()->getSymbolTableIndex());
+    } else {
+        node->setScopeLevel(currentLevel);
+        node->setSymbolTableIndex(-1);
+    }
+    
+    // Process the index expression
+    if (node->getIndex()) {
+        node->getIndex()->accept(this);
+    }
+    
+    // For now, set element type to INTEGER (would need proper type lookup from ATAB)
     node->setDataType(DataType::INTEGER);
 }
 
 void SemanticAnalyzer::visitRecordAccess(RecordAccessNode* node) {
     if (!node) return;
-    if (node->getRecordVar()) node->getRecordVar()->accept(this);
+    
+    // Process the record variable
+    if (node->getRecordVar()) {
+        node->getRecordVar()->accept(this);
+        
+        // Inherit scope level from record variable
+        node->setScopeLevel(node->getRecordVar()->getScopeLevel());
+        node->setSymbolTableIndex(node->getRecordVar()->getSymbolTableIndex());
+    } else {
+        node->setScopeLevel(currentLevel);
+        node->setSymbolTableIndex(-1);
+    }
+    
+    // For now, set field type to INTEGER (would need proper field lookup)
     node->setDataType(DataType::INTEGER);
 }
