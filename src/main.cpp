@@ -5,6 +5,9 @@
 #include <chrono>
 #include "include/lexer.h"
 #include "include/parser.h"
+#include "include/ast_builder.h"
+#include "include/semantic_analyzer.h"
+#include "include/symbol_table.h"
 
 using namespace std;
 
@@ -138,6 +141,90 @@ int main(int argc, char* argv[]) {
                          << parse_duration.count() / 1000.0 << " milliseconds)" << endl;
                 }
             }
+            
+            // AST BUILDING
+            if (!tree_only) {
+                cout << "----------------------------------------" << endl;
+                cout << "Building AST..." << endl;
+                cout << "----------------------------------------" << endl;
+            }
+            
+            auto ast_start = std::chrono::high_resolution_clock::now();
+            ASTBuilder astBuilder;
+            auto ast = astBuilder.buildAST(parseTree);
+            auto ast_end = std::chrono::high_resolution_clock::now();
+            
+            if (!ast) {
+                cerr << "AST building failed" << endl;
+                for (Token* token : tokens) {
+                    delete token;
+                }
+                return 1;
+            }
+            
+            if (!tree_only) {
+                cout << "AST built successfully!" << endl;
+                if (show_time) {
+                    auto ast_duration = std::chrono::duration_cast<std::chrono::microseconds>(ast_end - ast_start);
+                    cout << "AST building completed in " << ast_duration.count() << " microseconds ("
+                         << ast_duration.count() / 1000.0 << " milliseconds)" << endl;
+                }
+            }
+            
+            // SEMANTIC ANALYSIS
+            if (!tree_only) {
+                cout << "----------------------------------------" << endl;
+                cout << "Starting semantic analysis..." << endl;
+                cout << "----------------------------------------" << endl;
+            }
+            
+            auto sem_start = std::chrono::high_resolution_clock::now();
+            SymbolTable symbolTable;
+            SemanticAnalyzer semanticAnalyzer(symbolTable);
+            semanticAnalyzer.analyze(ast);
+            auto sem_end = std::chrono::high_resolution_clock::now();
+            
+            auto errors = semanticAnalyzer.getErrors();
+            
+            if (!tree_only) {
+                if (!errors.empty()) {
+                    cout << "----------------------------------------" << endl;
+                    cout << "SEMANTIC ERRORS:" << endl;
+                    cout << "----------------------------------------" << endl;
+                    for (const auto& error : errors) {
+                        cout << "Error: " << error << endl;
+                    }
+                } else {
+                    cout << "✓ No semantic errors found" << endl;
+                }
+                
+                cout << "----------------------------------------" << endl;
+                cout << "SYMBOL TABLE:" << endl;
+                cout << "----------------------------------------" << endl;
+                symbolTable.printAll();
+                
+                cout << "----------------------------------------" << endl;
+                cout << "DECORATED AST:" << endl;
+                cout << "----------------------------------------" << endl;
+                ast->print(0);
+                
+                cout << "----------------------------------------" << endl;
+                cout << "Semantic analysis completed!" << endl;
+                
+                if (show_time) {
+                    auto sem_duration = std::chrono::duration_cast<std::chrono::microseconds>(sem_end - sem_start);
+                    cout << "Semantic analysis completed in " << sem_duration.count() << " microseconds ("
+                         << sem_duration.count() / 1000.0 << " milliseconds)" << endl;
+                }
+                cout << "----------------------------------------" << endl;
+            }
+            
+            // Return error code if semantic errors found
+            for (Token* token : tokens) {
+                delete token;
+            }
+            return errors.empty() ? 0 : 1;
+            
         } catch (const exception& e) {
             cerr << "Parser error: " << e.what() << endl;
             for (Token* token : tokens) {
