@@ -17,6 +17,16 @@ TARGET = $(BINDIR)/compiler
 
 all: $(TARGET)
 
+# Formatting
+CLANG_FORMAT = clang-format
+FORMAT_SRCS = $(wildcard src/*.cpp) $(wildcard src/*.h) $(wildcard include/*.h)
+
+.PHONY: format
+format:
+	@command -v $(CLANG_FORMAT) >/dev/null 2>&1 || { echo >&2 "clang-format not found. Install it or adjust Makefile."; exit 1; }
+	$(CLANG_FORMAT) -i $(FORMAT_SRCS)
+	@echo "Formatted $(FORMAT_SRCS)"
+
 $(BINDIR):
 	mkdir -p $(BINDIR)
 
@@ -30,3 +40,4 @@ clean:
 rebuild: clean all
 
 .PHONY: all clean rebuild
+
