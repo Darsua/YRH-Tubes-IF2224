@@ -798,6 +798,9 @@ shared_ptr<ParseNode> Parser::parseStatementList() {
         } else if (matchKeyword("untuk")) {
             auto stmt = parseForStatement();
             node->addChild(stmt);
+        } else if (matchKeyword("ulangi")) {
+            auto stmt = parseRepeatStatement();
+            node->addChild(stmt);
         } else if (matchKeyword("mulai")) {
             auto stmt = parseCompoundStatement();
             node->addChild(stmt);
@@ -1122,6 +1125,104 @@ shared_ptr<ParseNode> Parser::parseForStatement() {
         node->addChild(bodyNode);
     }
 
+    return node;
+}
+
+// Grammar: <repeat-statement> -> KEYWORD("ulangi") + <statement-list> + KEYWORD("sampai") + <expression>
+// Grammar: <repeat-statement> -> KEYWORD(ulangi) + <statement-list> + KEYWORD(sampai) + <expression>
+shared_ptr<ParseNode> Parser::parseRepeatStatement() {
+    auto node = make_shared<ParseNode>("repeat-statement");
+    
+    // 1. Expect 'ulangi'
+    Token* repeatToken = currentToken();
+    expectKeyword("ulangi", "Expected 'ulangi'");
+    auto repeatNode = make_shared<ParseNode>("KEYWORD", repeatToken->getValue());
+    node->addChild(repeatNode);
+    
+    // 2. Parse statement list until 'sampai'
+    auto stmtList = make_shared<ParseNode>("statement-list");
+    
+    while (!matchKeyword("sampai") && currentToken()) {
+        bool isProcedureCall = false;
+
+        if (matchKeyword("jika")) {
+            auto stmt = parseIfStatement();
+            stmtList->addChild(stmt);
+        } else if (matchKeyword("selama")) {
+            auto stmt = parseWhileStatement();
+            stmtList->addChild(stmt);
+        } else if (matchKeyword("untuk")) {
+            auto stmt = parseForStatement();
+            stmtList->addChild(stmt);
+        } else if (matchKeyword("mulai")) {
+            auto stmt = parseCompoundStatement();
+            stmtList->addChild(stmt);
+        } else if (match(IDENTIFIER)) {
+            // Check if assignment or procedure call (same logic as parseStatementList)
+            size_t lookahead = currentPos + 1;
+            bool foundAssign = false;
+
+            while (lookahead < tokens.size() && tokens[lookahead]->getType() == DOT) {
+                lookahead++;
+                if (lookahead < tokens.size() && tokens[lookahead]->getType() == DOT) {
+                    break;
+                }
+                if (lookahead < tokens.size() && tokens[lookahead]->getType() == IDENTIFIER) {
+                    lookahead++;
+                }
+            }
+
+            while (lookahead < tokens.size() && tokens[lookahead]->getType() == LBRACKET) {
+                lookahead++;
+                int bracketDepth = 1;
+                while (lookahead < tokens.size() && bracketDepth > 0) {
+                    if (tokens[lookahead]->getType() == LBRACKET) bracketDepth++;
+                    if (tokens[lookahead]->getType() == RBRACKET) bracketDepth--;
+                    lookahead++;
+                }
+            }
+
+            if (lookahead < tokens.size() && tokens[lookahead]->getType() == ASSIGN_OPERATOR) {
+                foundAssign = true;
+            }
+
+            if (foundAssign) {
+                auto stmt = parseAssignmentStatement();
+                stmtList->addChild(stmt);
+            } else {
+                auto stmt = parseProcedureFunctionCall();
+                stmtList->addChild(stmt);
+                isProcedureCall = true;
+            }
+        } else {
+            break;
+        }
+
+        // Handle semicolon between statements
+        if (!matchKeyword("sampai") && currentToken()) {
+            if (!isProcedureCall) {
+                Token* semiToken = currentToken();
+                if (match(SEMICOLON)) {
+                    auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue());
+                    stmtList->addChild(semiNode);
+                    advance();
+                }
+            }
+        }
+    }
+    
+    node->addChild(stmtList);
+    
+    // 3. Expect 'sampai'
+    Token* untilToken = currentToken();
+    expectKeyword("sampai", "Expected 'sampai'");
+    auto untilNode = make_shared<ParseNode>("KEYWORD", untilToken->getValue());
+    node->addChild(untilNode);
+    
+    // 4. Parse condition expression
+    auto condition = parseExpression();
+    node->addChild(condition);
+    
     return node;
 }
 

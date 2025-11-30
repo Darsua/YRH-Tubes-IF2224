@@ -71,6 +71,7 @@ class Parser {
     shared_ptr<ParseNode> parseIfStatement();
     shared_ptr<ParseNode> parseWhileStatement();
     shared_ptr<ParseNode> parseForStatement();
+    shared_ptr<ParseNode> parseRepeatStatement();
     shared_ptr<ParseNode> parseProcedureFunctionCall();
     shared_ptr<ParseNode> parseParameterList();
     shared_ptr<ParseNode> parseExpression();
