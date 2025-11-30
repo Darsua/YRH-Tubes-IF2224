@@ -16,17 +16,12 @@ SymbolTable::SymbolTable() : level(0) {
     btab.reserve(100);
     atab.reserve(100);
 
+    // Initialize global block (btab[0])
+    btab.push_back(BtabEntry(-1, 0, 0, 0));
+    display.push(0);
+
     initializeReservedWords();
     initializeStandardIdentifiers();
-
-    BtabEntry globalBlock;
-    globalBlock.last = tab.size() - 1;
-    globalBlock.lpar = 0;
-    globalBlock.psze = 0;
-    globalBlock.vsze = 0;
-    btab.push_back(globalBlock);
-
-    display.push(0);
 }
 
 int SymbolTable::enterScope(int psize, int vsize) {
@@ -359,9 +354,6 @@ void SymbolTable::initializeStandardIdentifiers() {
     writelnProc.lev = 0;
     writelnProc.adr = 3;
     addSymbol(writelnProc);
-
-    // Update global block's last
-    btab[0].last = tab.size() - 1;
 }
 
 // ==================== DEBUGGING & PRINTING ====================
