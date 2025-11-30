@@ -6,11 +6,10 @@
 using namespace std;
 
 const vector<string> SymbolTable::RESERVED_WORDS = {
-    "dan", "larik", "mulai", "case", "konstanta", "bagi", "turun_ke", "lakukan",
-    "selain_itu", "selesai", "untuk", "fungsi", "jika", "mod", "tidak", "dari", "atau",
-    "prosedur", "program", "record", "ulangi", "string", "maka", "ke",
-    "tipe", "sampai", "variabel", "selama", "packed"
-};
+    "dan",        "larik",    "mulai",    "case",   "konstanta", "bagi",   "turun_ke", "lakukan",
+    "selain_itu", "selesai",  "untuk",    "fungsi", "jika",      "mod",    "tidak",    "dari",
+    "atau",       "prosedur", "program",  "record", "ulangi",    "string", "maka",     "ke",
+    "tipe",       "sampai",   "variabel", "selama", "packed"};
 
 SymbolTable::SymbolTable() : level(0) {
     tab.reserve(1000);
@@ -19,31 +18,31 @@ SymbolTable::SymbolTable() : level(0) {
 
     initializeReservedWords();
     initializeStandardIdentifiers();
-    
+
     BtabEntry globalBlock;
-    globalBlock.last = tab.size() - 1; 
+    globalBlock.last = tab.size() - 1;
     globalBlock.lpar = 0;
     globalBlock.psze = 0;
     globalBlock.vsze = 0;
     btab.push_back(globalBlock);
-    
+
     display.push(0);
 }
 
 int SymbolTable::enterScope(int psize, int vsize) {
     level++;
-    
+
     BtabEntry newBlock;
-    newBlock.last = tab.size() - 1; 
+    newBlock.last = tab.size() - 1;
     newBlock.lpar = 0;
     newBlock.psze = psize;
     newBlock.vsze = vsize;
-    
+
     int blockIndex = btab.size();
     btab.push_back(newBlock);
-    
+
     display.push(blockIndex);
-    
+
     return blockIndex;
 }
 
@@ -67,7 +66,7 @@ int SymbolTable::getCurrentLevel() const {
 
 int SymbolTable::addSymbol(const TabEntry& entry) {
     int index = tab.size();
-    
+
     // Set link to previous symbol in current block (for linked-list traversal)
     TabEntry newEntry = entry;
     int currentBlock = getCurrentBlock();
@@ -75,17 +74,17 @@ int SymbolTable::addSymbol(const TabEntry& entry) {
         // Link to previous 'last' symbol in this block
         newEntry.link = btab[currentBlock].last;
     }
-    
+
     tab.push_back(newEntry);
-    
+
     // Update name index untuk quick lookup
     nameIndex[entry.identifier].push_back(index);
-    
+
     // Update current block's last pointer
     if (currentBlock >= 0 && currentBlock < (int)btab.size()) {
         btab[currentBlock].last = index;
     }
-    
+
     return index;
 }
 
@@ -95,20 +94,20 @@ TabEntry* SymbolTable::lookupSymbol(const string& name, bool currentScopeOnly) {
     if (it == nameIndex.end()) {
         return nullptr;
     }
-    
+
     // Search in reverse order (most recent first)
     const vector<int>& indices = it->second;
-    
+
     if (currentScopeOnly) {
         // Search only in current block at current level
         int currentBlock = getCurrentBlock();
         if (currentBlock < 0 || currentBlock >= (int)btab.size()) {
             return nullptr;
         }
-        
+
         int lastInBlock = btab[currentBlock].last;
         int currentLevel = level;
-        
+
         // Traverse linked list of identifiers in this block
         for (int i = lastInBlock; i >= 0; i = tab[i].link) {
             // Only consider symbols at the current level
@@ -131,7 +130,7 @@ TabEntry* SymbolTable::lookupSymbol(const string& name, bool currentScopeOnly) {
             }
         }
     }
-    
+
     return nullptr;
 }
 
@@ -231,7 +230,7 @@ void SymbolTable::initializeReservedWords() {
         entry.nrm = 1;
         entry.lev = 0;
         entry.adr = 0;
-        
+
         tab.push_back(entry);
         nameIndex[entry.identifier].push_back(i);
     }
@@ -239,7 +238,7 @@ void SymbolTable::initializeReservedWords() {
 
 void SymbolTable::initializeStandardIdentifiers() {
     // Add standard types: integer (index 29), real (30), boolean (31), char (32)
-    
+
     // Integer type
     TabEntry intType;
     intType.identifier = "integer";
@@ -251,7 +250,7 @@ void SymbolTable::initializeStandardIdentifiers() {
     intType.lev = 0;
     intType.adr = 1;  // Size = 1
     int intIdx = addSymbol(intType);
-    
+
     // Real type
     TabEntry realType;
     realType.identifier = "real";
@@ -263,7 +262,7 @@ void SymbolTable::initializeStandardIdentifiers() {
     realType.lev = 0;
     realType.adr = 1;  // Size = 1
     int realIdx = addSymbol(realType);
-    
+
     // Boolean type
     TabEntry boolType;
     boolType.identifier = "boolean";
@@ -275,7 +274,7 @@ void SymbolTable::initializeStandardIdentifiers() {
     boolType.lev = 0;
     boolType.adr = 1;  // Size = 1
     int boolIdx = addSymbol(boolType);
-    
+
     // Char type
     TabEntry charType;
     charType.identifier = "char";
@@ -287,7 +286,7 @@ void SymbolTable::initializeStandardIdentifiers() {
     charType.lev = 0;
     charType.adr = 1;  // Size = 1
     int charIdx = addSymbol(charType);
-    
+
     // Add boolean constants: true and false
     TabEntry trueConst;
     trueConst.identifier = "true";
@@ -299,7 +298,7 @@ void SymbolTable::initializeStandardIdentifiers() {
     trueConst.lev = 0;
     trueConst.adr = 1;  // TRUE = 1
     int trueIdx = addSymbol(trueConst);
-    
+
     TabEntry falseConst;
     falseConst.identifier = "false";
     falseConst.link = trueIdx;
@@ -310,9 +309,9 @@ void SymbolTable::initializeStandardIdentifiers() {
     falseConst.lev = 0;
     falseConst.adr = 0;  // FALSE = 0
     int falseIdx = addSymbol(falseConst);
-    
+
     // Add standard procedures: read, readln, write, writeln
-    
+
     // read procedure
     TabEntry readProc;
     readProc.identifier = "read";
@@ -324,7 +323,7 @@ void SymbolTable::initializeStandardIdentifiers() {
     readProc.lev = 0;
     readProc.adr = 0;
     int readIdx = addSymbol(readProc);
-    
+
     // readln procedure
     TabEntry readlnProc;
     readlnProc.identifier = "readln";
@@ -336,7 +335,7 @@ void SymbolTable::initializeStandardIdentifiers() {
     readlnProc.lev = 0;
     readlnProc.adr = 1;
     int readlnIdx = addSymbol(readlnProc);
-    
+
     // write procedure
     TabEntry writeProc;
     writeProc.identifier = "write";
@@ -348,7 +347,7 @@ void SymbolTable::initializeStandardIdentifiers() {
     writeProc.lev = 0;
     writeProc.adr = 2;
     int writeIdx = addSymbol(writeProc);
-    
+
     // writeln procedure
     TabEntry writelnProc;
     writelnProc.identifier = "writeln";
@@ -360,7 +359,7 @@ void SymbolTable::initializeStandardIdentifiers() {
     writelnProc.lev = 0;
     writelnProc.adr = 3;
     addSymbol(writelnProc);
-    
+
     // Update global block's last
     btab[0].last = tab.size() - 1;
 }
@@ -369,71 +368,43 @@ void SymbolTable::initializeStandardIdentifiers() {
 
 void SymbolTable::printTab() const {
     cout << "\n=== TAB (Identifier Table) ===" << endl;
-    cout << setw(5) << "Idx" 
-         << setw(15) << "Identifier" 
-         << setw(6) << "Link"
-         << setw(12) << "Obj"
-         << setw(10) << "Type"
-         << setw(6) << "Ref"
-         << setw(5) << "Nrm"
-         << setw(5) << "Lev"
+    cout << setw(5) << "Idx" << setw(15) << "Identifier" << setw(6) << "Link" << setw(12) << "Obj"
+         << setw(10) << "Type" << setw(6) << "Ref" << setw(5) << "Nrm" << setw(5) << "Lev"
          << setw(6) << "Adr" << endl;
     cout << string(80, '-') << endl;
-    
+
     for (size_t i = 0; i < tab.size(); i++) {
         const TabEntry& entry = tab[i];
-        cout << setw(5) << i
-             << setw(15) << entry.identifier
-             << setw(6) << entry.link
-             << setw(12) << objectClassToString(entry.obj)
-             << setw(10) << typeCodeToString(entry.typ)
-             << setw(6) << entry.ref
-             << setw(5) << entry.nrm
-             << setw(5) << entry.lev
-             << setw(6) << entry.adr << endl;
+        cout << setw(5) << i << setw(15) << entry.identifier << setw(6) << entry.link << setw(12)
+             << objectClassToString(entry.obj) << setw(10) << typeCodeToString(entry.typ) << setw(6)
+             << entry.ref << setw(5) << entry.nrm << setw(5) << entry.lev << setw(6) << entry.adr
+             << endl;
     }
 }
 
 void SymbolTable::printBtab() const {
     cout << "\n=== BTAB (Block Table) ===" << endl;
-    cout << setw(5) << "Idx"
-         << setw(8) << "Last"
-         << setw(8) << "Lpar"
-         << setw(8) << "Psze"
+    cout << setw(5) << "Idx" << setw(8) << "Last" << setw(8) << "Lpar" << setw(8) << "Psze"
          << setw(8) << "Vsze" << endl;
     cout << string(40, '-') << endl;
-    
+
     for (size_t i = 0; i < btab.size(); i++) {
         const BtabEntry& entry = btab[i];
-        cout << setw(5) << i
-             << setw(8) << entry.last
-             << setw(8) << entry.lpar
-             << setw(8) << entry.psze
-             << setw(8) << entry.vsze << endl;
+        cout << setw(5) << i << setw(8) << entry.last << setw(8) << entry.lpar << setw(8)
+             << entry.psze << setw(8) << entry.vsze << endl;
     }
 }
 
 void SymbolTable::printAtab() const {
     cout << "\n=== ATAB (Array Table) ===" << endl;
-    cout << setw(5) << "Idx"
-         << setw(8) << "Xtyp"
-         << setw(8) << "Etyp"
-         << setw(8) << "Eref"
-         << setw(8) << "Low"
-         << setw(8) << "High"
-         << setw(8) << "Elsz"
-         << setw(8) << "Size" << endl;
+    cout << setw(5) << "Idx" << setw(8) << "Xtyp" << setw(8) << "Etyp" << setw(8) << "Eref"
+         << setw(8) << "Low" << setw(8) << "High" << setw(8) << "Elsz" << setw(8) << "Size" << endl;
     cout << string(65, '-') << endl;
-    
+
     for (size_t i = 0; i < atab.size(); i++) {
         const AtabEntry& entry = atab[i];
-        cout << setw(5) << i
-             << setw(8) << entry.xtyp
-             << setw(8) << entry.etyp
-             << setw(8) << entry.eref
-             << setw(8) << entry.low
-             << setw(8) << entry.high
-             << setw(8) << entry.elsz
+        cout << setw(5) << i << setw(8) << entry.xtyp << setw(8) << entry.etyp << setw(8)
+             << entry.eref << setw(8) << entry.low << setw(8) << entry.high << setw(8) << entry.elsz
              << setw(8) << entry.size << endl;
     }
 }
@@ -451,34 +422,27 @@ void SymbolTable::printBlock(int blockIndex) const {
         cout << "Invalid block index: " << blockIndex << endl;
         return;
     }
-    
+
     cout << "\n=== Block " << blockIndex << " Symbols ===" << endl;
     const BtabEntry& block = btab[blockIndex];
-    
-    cout << "Block info: last=" << block.last 
-         << ", lpar=" << block.lpar
-         << ", psze=" << block.psze
+
+    cout << "Block info: last=" << block.last << ", lpar=" << block.lpar << ", psze=" << block.psze
          << ", vsze=" << block.vsze << endl;
-    
+
     cout << "\nSymbols in this block:" << endl;
-    cout << setw(5) << "Idx" 
-         << setw(15) << "Identifier" 
-         << setw(12) << "Obj"
-         << setw(10) << "Type"
+    cout << setw(5) << "Idx" << setw(15) << "Identifier" << setw(12) << "Obj" << setw(10) << "Type"
          << setw(5) << "Lev" << endl;
     cout << string(50, '-') << endl;
-    
+
     // Find start of block
     int start = (blockIndex > 0) ? btab[blockIndex - 1].last + 1 : 0;
-    
+
     // Print symbols in this block
     for (int i = start; i <= block.last && i < (int)tab.size(); i++) {
         const TabEntry& entry = tab[i];
-        cout << setw(5) << i
-             << setw(15) << entry.identifier
-             << setw(12) << objectClassToString(entry.obj)
-             << setw(10) << typeCodeToString(entry.typ)
-             << setw(5) << entry.lev << endl;
+        cout << setw(5) << i << setw(15) << entry.identifier << setw(12)
+             << objectClassToString(entry.obj) << setw(10) << typeCodeToString(entry.typ) << setw(5)
+             << entry.lev << endl;
     }
 }
 
@@ -486,7 +450,7 @@ void SymbolTable::printDisplay() const {
     cout << "\n=== Display Stack ===" << endl;
     cout << "Current level: " << level << endl;
     cout << "Stack (top to bottom): ";
-    
+
     // Need to copy stack to print it
     stack<int> temp = display;
     vector<int> blocks;
@@ -494,7 +458,7 @@ void SymbolTable::printDisplay() const {
         blocks.push_back(temp.top());
         temp.pop();
     }
-    
+
     reverse(blocks.begin(), blocks.end());
     for (size_t i = 0; i < blocks.size(); i++) {
         cout << blocks[i];
@@ -507,26 +471,42 @@ void SymbolTable::printDisplay() const {
 
 string objectClassToString(int obj) {
     switch (obj) {
-        case 0: return "CONST";
-        case 1: return "VAR";
-        case 2: return "TYPE";
-        case 3: return "PROC";
-        case 4: return "FUNC";
-        case 5: return "RESERVED";
-        case 6: return "PROGRAM";
-        default: return "UNKNOWN";
+        case 0:
+            return "CONST";
+        case 1:
+            return "VAR";
+        case 2:
+            return "TYPE";
+        case 3:
+            return "PROC";
+        case 4:
+            return "FUNC";
+        case 5:
+            return "RESERVED";
+        case 6:
+            return "PROGRAM";
+        default:
+            return "UNKNOWN";
     }
 }
 
 string typeCodeToString(int typ) {
     switch (typ) {
-        case 0: return "NOTYP";
-        case 1: return "INT";
-        case 2: return "REAL";
-        case 3: return "BOOL";
-        case 4: return "CHAR";
-        case 5: return "ARRAY";
-        case 6: return "RECORD";
-        default: return "UNKNOWN";
+        case 0:
+            return "NOTYP";
+        case 1:
+            return "INT";
+        case 2:
+            return "REAL";
+        case 3:
+            return "BOOL";
+        case 4:
+            return "CHAR";
+        case 5:
+            return "ARRAY";
+        case 6:
+            return "RECORD";
+        default:
+            return "UNKNOWN";
     }
 }

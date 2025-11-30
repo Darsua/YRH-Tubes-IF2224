@@ -10,18 +10,15 @@
 
 using namespace std;
 
-enum LexerMode {
-    DFA_MODE,
-    SWITCH_MODE
-};
+enum LexerMode { DFA_MODE, SWITCH_MODE };
 
 class Lexer {
-private:
+   private:
     LexerMode mode;
     DFA dfa;
     map<string, Type> stateToTokenType;
     int currentLine;
-    
+
     // Common helper methods
     bool isPascalKeyword(const string& word);
     bool isLogicalOperator(const string& word);
@@ -31,16 +28,16 @@ private:
     void skipParenComment(FILE* file);
     int getChar(FILE* file);
     void ungetChar(int c, FILE* file);
-    
+
     // Switch-based lexer methods
     Token* readTokenSwitch(FILE* file);
-    
+
     // DFA-based lexer methods
     void initializeStateMapping();
     Token* createToken(const string& state, const string& value, int line);
     Token* readTokenDFA(FILE* file);
-    
-public:
+
+   public:
     Lexer(LexerMode mode = DFA_MODE, const string& dfaRulesFile = "rules/pascal_lexicon.dfa");
     Token* readToken(FILE* file);
     vector<Token*> lex(FILE* file);
@@ -50,4 +47,4 @@ public:
 FILE* read_file(const char* filename);
 vector<Token*> lex_file(const char* filename, LexerMode mode = DFA_MODE);
 
-#endif // LEXER_H
+#endif  // LEXER_H

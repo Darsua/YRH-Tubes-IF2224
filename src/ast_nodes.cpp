@@ -8,31 +8,51 @@ using namespace std;
 
 string dataTypeToString(DataType type) {
     switch (type) {
-        case DataType::VOID: return "void";
-        case DataType::INTEGER: return "integer";
-        case DataType::REAL: return "real";
-        case DataType::BOOLEAN: return "boolean";
-        case DataType::CHAR: return "char";
-        case DataType::STRING: return "string";
-        case DataType::ARRAY: return "array";
-        case DataType::RECORD: return "record";
-        case DataType::UNKNOWN: return "unknown";
-        default: return "undefined";
+        case DataType::VOID:
+            return "void";
+        case DataType::INTEGER:
+            return "integer";
+        case DataType::REAL:
+            return "real";
+        case DataType::BOOLEAN:
+            return "boolean";
+        case DataType::CHAR:
+            return "char";
+        case DataType::STRING:
+            return "string";
+        case DataType::ARRAY:
+            return "array";
+        case DataType::RECORD:
+            return "record";
+        case DataType::UNKNOWN:
+            return "unknown";
+        default:
+            return "undefined";
     }
 }
 
 string objectTypeToString(ObjectType type) {
     switch (type) {
-        case ObjectType::CONSTANT: return "constant";
-        case ObjectType::VARIABLE: return "variable";
-        case ObjectType::TYPE_DEF: return "type";
-        case ObjectType::PROCEDURE: return "procedure";
-        case ObjectType::FUNCTION: return "function";
-        case ObjectType::PARAMETER: return "parameter";
-        case ObjectType::ARRAY_TYPE: return "array_type";
-        case ObjectType::RECORD_TYPE: return "record_type";
-        case ObjectType::PROGRAM: return "program";
-        default: return "undefined";
+        case ObjectType::CONSTANT:
+            return "constant";
+        case ObjectType::VARIABLE:
+            return "variable";
+        case ObjectType::TYPE_DEF:
+            return "type";
+        case ObjectType::PROCEDURE:
+            return "procedure";
+        case ObjectType::FUNCTION:
+            return "function";
+        case ObjectType::PARAMETER:
+            return "parameter";
+        case ObjectType::ARRAY_TYPE:
+            return "array_type";
+        case ObjectType::RECORD_TYPE:
+            return "record_type";
+        case ObjectType::PROGRAM:
+            return "program";
+        default:
+            return "undefined";
     }
 }
 
@@ -45,14 +65,16 @@ static void printIndent(int indent) {
 
 // ==================== BASE AST NODE ====================
 
-ASTNode::ASTNode() 
-    : dataType(DataType::UNKNOWN), symbolTableIndex(-1), scopeLevel(0), 
-      lineNumber(0), columnNumber(0) {}
+ASTNode::ASTNode()
+    : dataType(DataType::UNKNOWN),
+      symbolTableIndex(-1),
+      scopeLevel(0),
+      lineNumber(0),
+      columnNumber(0) {}
 
 // ==================== PROGRAM NODE ====================
 
-ProgramNode::ProgramNode(const string& programName) 
-    : name(programName) {
+ProgramNode::ProgramNode(const string& programName) : name(programName) {
     dataType = DataType::VOID;
 }
 
@@ -75,7 +97,7 @@ void ProgramNode::print(int indent) const {
         cout << ", tab_index: " << symbolTableIndex;
     }
     cout << ")" << endl;
-    
+
     if (!declarations.empty()) {
         printIndent(indent + 1);
         cout << "Declarations:" << endl;
@@ -83,7 +105,7 @@ void ProgramNode::print(int indent) const {
             decl->print(indent + 2);
         }
     }
-    
+
     if (compoundStatement) {
         printIndent(indent + 1);
         cout << "Body:" << endl;
@@ -93,7 +115,7 @@ void ProgramNode::print(int indent) const {
 
 // ==================== VARIABLE DECLARATION NODE ====================
 
-VarDeclNode::VarDeclNode(const string& varName, DataType type) 
+VarDeclNode::VarDeclNode(const string& varName, DataType type)
     : name(varName), varType(type), customTypeName(""), isParameter(false), isVarParameter(false) {
     dataType = type;
 }
@@ -118,7 +140,7 @@ void VarDeclNode::print(int indent) const {
 
 // ==================== CONSTANT DECLARATION NODE ====================
 
-ConstDeclNode::ConstDeclNode(const string& constName, shared_ptr<ASTNode> val) 
+ConstDeclNode::ConstDeclNode(const string& constName, shared_ptr<ASTNode> val)
     : name(constName), value(val) {
     if (val) {
         dataType = val->getDataType();
@@ -145,7 +167,7 @@ void ConstDeclNode::print(int indent) const {
 
 // ==================== TYPE DECLARATION NODE ====================
 
-TypeDeclNode::TypeDeclNode(const string& typeName, DataType kind, shared_ptr<ASTNode> typeDef) 
+TypeDeclNode::TypeDeclNode(const string& typeName, DataType kind, shared_ptr<ASTNode> typeDef)
     : name(typeName), typeKind(kind), typeDefinition(typeDef) {
     dataType = kind;
 }
@@ -168,13 +190,21 @@ void TypeDeclNode::print(int indent) const {
 
 // ==================== ARRAY TYPE NODE ====================
 
-ArrayTypeNode::ArrayTypeNode(int low, int high, DataType elemType) 
-    : lowBound(low), highBound(high), elementType(elemType), nestedElementType(nullptr), arrayTableIndex(-1) {
+ArrayTypeNode::ArrayTypeNode(int low, int high, DataType elemType)
+    : lowBound(low),
+      highBound(high),
+      elementType(elemType),
+      nestedElementType(nullptr),
+      arrayTableIndex(-1) {
     dataType = DataType::ARRAY;
 }
 
-ArrayTypeNode::ArrayTypeNode(int low, int high, shared_ptr<ArrayTypeNode> nestedElemType) 
-    : lowBound(low), highBound(high), elementType(DataType::ARRAY), nestedElementType(nestedElemType), arrayTableIndex(-1) {
+ArrayTypeNode::ArrayTypeNode(int low, int high, shared_ptr<ArrayTypeNode> nestedElemType)
+    : lowBound(low),
+      highBound(high),
+      elementType(DataType::ARRAY),
+      nestedElementType(nestedElemType),
+      arrayTableIndex(-1) {
     dataType = DataType::ARRAY;
 }
 
@@ -185,15 +215,14 @@ void ArrayTypeNode::accept(ASTVisitor* visitor) {
 void ArrayTypeNode::print(int indent) const {
     printIndent(indent);
     if (nestedElementType) {
-        cout << "ArrayType(range: [" << lowBound << ".." << highBound 
-             << "], element_type: ARRAY";
+        cout << "ArrayType(range: [" << lowBound << ".." << highBound << "], element_type: ARRAY";
         if (arrayTableIndex >= 0) {
             cout << ", atab_index: " << arrayTableIndex;
         }
         cout << ")" << endl;
         nestedElementType->print(indent + 1);
     } else {
-        cout << "ArrayType(range: [" << lowBound << ".." << highBound 
+        cout << "ArrayType(range: [" << lowBound << ".." << highBound
              << "], element_type: " << dataTypeToString(elementType);
         if (arrayTableIndex >= 0) {
             cout << ", atab_index: " << arrayTableIndex;
@@ -204,8 +233,7 @@ void ArrayTypeNode::print(int indent) const {
 
 // ==================== RECORD TYPE NODE ====================
 
-RecordTypeNode::RecordTypeNode() 
-    : blockTableIndex(-1) {
+RecordTypeNode::RecordTypeNode() : blockTableIndex(-1) {
     dataType = DataType::RECORD;
 }
 
@@ -224,7 +252,7 @@ void RecordTypeNode::print(int indent) const {
         cout << "btab_index: " << blockTableIndex;
     }
     cout << ")" << endl;
-    
+
     if (!fields.empty()) {
         printIndent(indent + 1);
         cout << "Fields:" << endl;
@@ -236,8 +264,7 @@ void RecordTypeNode::print(int indent) const {
 
 // ==================== PROCEDURE DECLARATION NODE ====================
 
-ProcedureDeclNode::ProcedureDeclNode(const string& procName) 
-    : name(procName), blockTableIndex(-1) {
+ProcedureDeclNode::ProcedureDeclNode(const string& procName) : name(procName), blockTableIndex(-1) {
     dataType = DataType::VOID;
 }
 
@@ -267,7 +294,7 @@ void ProcedureDeclNode::print(int indent) const {
         cout << ", btab_index: " << blockTableIndex;
     }
     cout << ")" << endl;
-    
+
     if (!parameters.empty()) {
         printIndent(indent + 1);
         cout << "Parameters:" << endl;
@@ -275,7 +302,7 @@ void ProcedureDeclNode::print(int indent) const {
             param->print(indent + 2);
         }
     }
-    
+
     if (!declarations.empty()) {
         printIndent(indent + 1);
         cout << "Declarations:" << endl;
@@ -283,7 +310,7 @@ void ProcedureDeclNode::print(int indent) const {
             decl->print(indent + 2);
         }
     }
-    
+
     if (compoundStatement) {
         printIndent(indent + 1);
         cout << "Body:" << endl;
@@ -293,7 +320,7 @@ void ProcedureDeclNode::print(int indent) const {
 
 // ==================== FUNCTION DECLARATION NODE ====================
 
-FunctionDeclNode::FunctionDeclNode(const string& funcName, DataType retType) 
+FunctionDeclNode::FunctionDeclNode(const string& funcName, DataType retType)
     : name(funcName), returnType(retType), blockTableIndex(-1) {
     dataType = retType;
 }
@@ -316,8 +343,7 @@ void FunctionDeclNode::accept(ASTVisitor* visitor) {
 
 void FunctionDeclNode::print(int indent) const {
     printIndent(indent);
-    cout << "FunctionDecl(name: '" << name 
-         << "', return_type: " << dataTypeToString(returnType);
+    cout << "FunctionDecl(name: '" << name << "', return_type: " << dataTypeToString(returnType);
     if (symbolTableIndex >= 0) {
         cout << ", tab_index: " << symbolTableIndex;
     }
@@ -325,7 +351,7 @@ void FunctionDeclNode::print(int indent) const {
         cout << ", btab_index: " << blockTableIndex;
     }
     cout << ")" << endl;
-    
+
     if (!parameters.empty()) {
         printIndent(indent + 1);
         cout << "Parameters:" << endl;
@@ -333,7 +359,7 @@ void FunctionDeclNode::print(int indent) const {
             param->print(indent + 2);
         }
     }
-    
+
     if (!declarations.empty()) {
         printIndent(indent + 1);
         cout << "Declarations:" << endl;
@@ -341,7 +367,7 @@ void FunctionDeclNode::print(int indent) const {
             decl->print(indent + 2);
         }
     }
-    
+
     if (compoundStatement) {
         printIndent(indent + 1);
         cout << "Body:" << endl;
@@ -373,8 +399,7 @@ void CompoundStatementNode::print(int indent) const {
 
 // ==================== ASSIGNMENT NODE ====================
 
-AssignNode::AssignNode(shared_ptr<ASTNode> lhs, shared_ptr<ASTNode> rhs) 
-    : target(lhs), value(rhs) {
+AssignNode::AssignNode(shared_ptr<ASTNode> lhs, shared_ptr<ASTNode> rhs) : target(lhs), value(rhs) {
     dataType = DataType::VOID;
 }
 
@@ -385,13 +410,13 @@ void AssignNode::accept(ASTVisitor* visitor) {
 void AssignNode::print(int indent) const {
     printIndent(indent);
     cout << "Assign" << endl;
-    
+
     if (target) {
         printIndent(indent + 1);
         cout << "Target:" << endl;
         target->print(indent + 2);
     }
-    
+
     if (value) {
         printIndent(indent + 1);
         cout << "Value:" << endl;
@@ -401,7 +426,7 @@ void AssignNode::print(int indent) const {
 
 // ==================== IF NODE ====================
 
-IfNode::IfNode(shared_ptr<ASTNode> cond, shared_ptr<ASTNode> thenStmt, shared_ptr<ASTNode> elseStmt) 
+IfNode::IfNode(shared_ptr<ASTNode> cond, shared_ptr<ASTNode> thenStmt, shared_ptr<ASTNode> elseStmt)
     : condition(cond), thenStatement(thenStmt), elseStatement(elseStmt) {
     dataType = DataType::VOID;
 }
@@ -413,19 +438,19 @@ void IfNode::accept(ASTVisitor* visitor) {
 void IfNode::print(int indent) const {
     printIndent(indent);
     cout << "If" << endl;
-    
+
     if (condition) {
         printIndent(indent + 1);
         cout << "Condition:" << endl;
         condition->print(indent + 2);
     }
-    
+
     if (thenStatement) {
         printIndent(indent + 1);
         cout << "Then:" << endl;
         thenStatement->print(indent + 2);
     }
-    
+
     if (elseStatement) {
         printIndent(indent + 1);
         cout << "Else:" << endl;
@@ -435,7 +460,7 @@ void IfNode::print(int indent) const {
 
 // ==================== WHILE NODE ====================
 
-WhileNode::WhileNode(shared_ptr<ASTNode> cond, shared_ptr<ASTNode> bodyStmt) 
+WhileNode::WhileNode(shared_ptr<ASTNode> cond, shared_ptr<ASTNode> bodyStmt)
     : condition(cond), body(bodyStmt) {
     dataType = DataType::VOID;
 }
@@ -447,13 +472,13 @@ void WhileNode::accept(ASTVisitor* visitor) {
 void WhileNode::print(int indent) const {
     printIndent(indent);
     cout << "While" << endl;
-    
+
     if (condition) {
         printIndent(indent + 1);
         cout << "Condition:" << endl;
         condition->print(indent + 2);
     }
-    
+
     if (body) {
         printIndent(indent + 1);
         cout << "Body:" << endl;
@@ -463,10 +488,9 @@ void WhileNode::print(int indent) const {
 
 // ==================== FOR NODE ====================
 
-ForNode::ForNode(const string& loopVar, shared_ptr<ASTNode> start, 
-                 shared_ptr<ASTNode> end, bool downto, shared_ptr<ASTNode> bodyStmt) 
-    : loopVariable(loopVar), startValue(start), endValue(end), 
-      isDownto(downto), body(bodyStmt) {
+ForNode::ForNode(const string& loopVar, shared_ptr<ASTNode> start, shared_ptr<ASTNode> end,
+                 bool downto, shared_ptr<ASTNode> bodyStmt)
+    : loopVariable(loopVar), startValue(start), endValue(end), isDownto(downto), body(bodyStmt) {
     dataType = DataType::VOID;
 }
 
@@ -476,21 +500,21 @@ void ForNode::accept(ASTVisitor* visitor) {
 
 void ForNode::print(int indent) const {
     printIndent(indent);
-    cout << "For(variable: '" << loopVariable 
-         << "', direction: " << (isDownto ? "downto" : "to") << ")" << endl;
-    
+    cout << "For(variable: '" << loopVariable << "', direction: " << (isDownto ? "downto" : "to")
+         << ")" << endl;
+
     if (startValue) {
         printIndent(indent + 1);
         cout << "Start:" << endl;
         startValue->print(indent + 2);
     }
-    
+
     if (endValue) {
         printIndent(indent + 1);
         cout << "End:" << endl;
         endValue->print(indent + 2);
     }
-    
+
     if (body) {
         printIndent(indent + 1);
         cout << "Body:" << endl;
@@ -500,8 +524,7 @@ void ForNode::print(int indent) const {
 
 // ==================== PROCEDURE CALL NODE ====================
 
-ProcCallNode::ProcCallNode(const string& procName) 
-    : name(procName) {
+ProcCallNode::ProcCallNode(const string& procName) : name(procName) {
     dataType = DataType::VOID;
 }
 
@@ -520,7 +543,7 @@ void ProcCallNode::print(int indent) const {
         cout << ", tab_index: " << symbolTableIndex;
     }
     cout << ")" << endl;
-    
+
     if (!arguments.empty()) {
         printIndent(indent + 1);
         cout << "Arguments:" << endl;
@@ -532,8 +555,8 @@ void ProcCallNode::print(int indent) const {
 
 // ==================== BINARY OPERATION NODE ====================
 
-BinOpNode::BinOpNode(const string& operation, shared_ptr<ASTNode> leftOperand, 
-                     shared_ptr<ASTNode> rightOperand) 
+BinOpNode::BinOpNode(const string& operation, shared_ptr<ASTNode> leftOperand,
+                     shared_ptr<ASTNode> rightOperand)
     : op(operation), left(leftOperand), right(rightOperand) {
     // Type akan di-set oleh semantic analyzer
 }
@@ -545,13 +568,13 @@ void BinOpNode::accept(ASTVisitor* visitor) {
 void BinOpNode::print(int indent) const {
     printIndent(indent);
     cout << "BinOp(op: '" << op << "', type: " << dataTypeToString(dataType) << ")" << endl;
-    
+
     if (left) {
         printIndent(indent + 1);
         cout << "Left:" << endl;
         left->print(indent + 2);
     }
-    
+
     if (right) {
         printIndent(indent + 1);
         cout << "Right:" << endl;
@@ -561,7 +584,7 @@ void BinOpNode::print(int indent) const {
 
 // ==================== UNARY OPERATION NODE ====================
 
-UnaryOpNode::UnaryOpNode(const string& operation, shared_ptr<ASTNode> operandNode) 
+UnaryOpNode::UnaryOpNode(const string& operation, shared_ptr<ASTNode> operandNode)
     : op(operation), operand(operandNode) {
     // Type akan di-set oleh semantic analyzer
 }
@@ -573,7 +596,7 @@ void UnaryOpNode::accept(ASTVisitor* visitor) {
 void UnaryOpNode::print(int indent) const {
     printIndent(indent);
     cout << "UnaryOp(op: '" << op << "', type: " << dataTypeToString(dataType) << ")" << endl;
-    
+
     if (operand) {
         printIndent(indent + 1);
         cout << "Operand:" << endl;
@@ -583,13 +606,11 @@ void UnaryOpNode::print(int indent) const {
 
 // ==================== NUMBER NODE ====================
 
-NumberNode::NumberNode(int value) 
-    : intValue(value), realValue(0.0), isReal(false) {
+NumberNode::NumberNode(int value) : intValue(value), realValue(0.0), isReal(false) {
     dataType = DataType::INTEGER;
 }
 
-NumberNode::NumberNode(double value) 
-    : intValue(0), realValue(value), isReal(true) {
+NumberNode::NumberNode(double value) : intValue(0), realValue(value), isReal(true) {
     dataType = DataType::REAL;
 }
 
@@ -610,8 +631,7 @@ void NumberNode::print(int indent) const {
 
 // ==================== STRING NODE ====================
 
-StringNode::StringNode(const string& str) 
-    : value(str) {
+StringNode::StringNode(const string& str) : value(str) {
     dataType = DataType::STRING;
 }
 
@@ -626,8 +646,7 @@ void StringNode::print(int indent) const {
 
 // ==================== CHAR NODE ====================
 
-CharNode::CharNode(char ch) 
-    : value(ch) {
+CharNode::CharNode(char ch) : value(ch) {
     dataType = DataType::CHAR;
 }
 
@@ -642,8 +661,7 @@ void CharNode::print(int indent) const {
 
 // ==================== BOOL NODE ====================
 
-BoolNode::BoolNode(bool val) 
-    : value(val) {
+BoolNode::BoolNode(bool val) : value(val) {
     dataType = DataType::BOOLEAN;
 }
 
@@ -658,8 +676,7 @@ void BoolNode::print(int indent) const {
 
 // ==================== VARIABLE NODE ====================
 
-VarNode::VarNode(const string& varName) 
-    : name(varName) {
+VarNode::VarNode(const string& varName) : name(varName) {
     // Type akan di-set oleh semantic analyzer setelah lookup
 }
 
@@ -684,7 +701,7 @@ void VarNode::print(int indent) const {
 
 // ==================== ARRAY ACCESS NODE ====================
 
-ArrayAccessNode::ArrayAccessNode(shared_ptr<ASTNode> arr, shared_ptr<ASTNode> idx) 
+ArrayAccessNode::ArrayAccessNode(shared_ptr<ASTNode> arr, shared_ptr<ASTNode> idx)
     : arrayVar(arr), index(idx) {
     // Type akan di-set oleh semantic analyzer
 }
@@ -696,11 +713,11 @@ void ArrayAccessNode::accept(ASTVisitor* visitor) {
 void ArrayAccessNode::print(int indent) const {
     printIndent(indent);
     cout << "ArrayAccess(type: " << dataTypeToString(dataType) << ")" << endl;
-    
+
     printIndent(indent + 1);
     cout << "Array:" << endl;
     arrayVar->print(indent + 2);
-    
+
     printIndent(indent + 1);
     cout << "Index:" << endl;
     index->print(indent + 2);
@@ -708,7 +725,7 @@ void ArrayAccessNode::print(int indent) const {
 
 // ==================== RECORD ACCESS NODE ====================
 
-RecordAccessNode::RecordAccessNode(shared_ptr<ASTNode> rec, const string& field) 
+RecordAccessNode::RecordAccessNode(shared_ptr<ASTNode> rec, const string& field)
     : recordVar(rec), fieldName(field) {
     // Type akan di-set oleh semantic analyzer
 }
@@ -719,9 +736,9 @@ void RecordAccessNode::accept(ASTVisitor* visitor) {
 
 void RecordAccessNode::print(int indent) const {
     printIndent(indent);
-    cout << "RecordAccess(field: '" << fieldName 
-         << "', type: " << dataTypeToString(dataType) << ")" << endl;
-    
+    cout << "RecordAccess(field: '" << fieldName << "', type: " << dataTypeToString(dataType) << ")"
+         << endl;
+
     printIndent(indent + 1);
     cout << "Record:" << endl;
     recordVar->print(indent + 2);

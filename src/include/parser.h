@@ -9,29 +9,37 @@
 using namespace std;
 
 class ParseNode {
-private:
+   private:
     string nodeType;
     string value;
     vector<shared_ptr<ParseNode>> children;
     int line;
-    
-public:
+
+   public:
     ParseNode(const string& type, const string& val = "", int ln = 0);
     void addChild(shared_ptr<ParseNode> child);
     void print(int indent = 0) const;
     void printTree(const string& prefix = "", bool isLast = true) const;
-    string getType() const { return nodeType; }
-    string getValue() const { return value; }
-    const vector<shared_ptr<ParseNode>>& getChildren() const { return children; }
-    int getLine() const { return line; }
+    string getType() const {
+        return nodeType;
+    }
+    string getValue() const {
+        return value;
+    }
+    const vector<shared_ptr<ParseNode>>& getChildren() const {
+        return children;
+    }
+    int getLine() const {
+        return line;
+    }
 };
 
 class Parser {
-private:
+   private:
     vector<Token*> tokens;
     size_t currentPos;
     vector<string> errors;
-    
+
     Token* currentToken();
     Token* peek(int offset = 1);
     void advance();
@@ -72,12 +80,16 @@ private:
     shared_ptr<ParseNode> parseRelationalOperator();
     shared_ptr<ParseNode> parseAdditiveOperator();
     shared_ptr<ParseNode> parseMultiplicationOperator();
-    
-public:
+
+   public:
     Parser(const vector<Token*>& tokenList);
     shared_ptr<ParseNode> parse();
-    const vector<string>& getErrors() const { return errors; }
-    bool hasErrors() const { return !errors.empty(); }
+    const vector<string>& getErrors() const {
+        return errors;
+    }
+    bool hasErrors() const {
+        return !errors.empty();
+    }
 };
 
 #endif
