@@ -316,9 +316,14 @@ vector<shared_ptr<ConstDeclNode>> ASTBuilder::convertConstDeclaration(shared_ptr
                             value = make_shared<BoolNode>(valStr == "true");
                             setPosition(value, valNode);
                         }
-                        // Single character
+                        // Single character (without quotes from parser)
                         else if (valStr.length() == 1) {
                             value = make_shared<CharNode>(valStr[0]);
+                            setPosition(value, valNode);
+                        }
+                        // Multi-character string (without quotes from parser)
+                        else if (valStr.length() > 1) {
+                            value = make_shared<StringNode>(valStr);
                             setPosition(value, valNode);
                         }
                     }

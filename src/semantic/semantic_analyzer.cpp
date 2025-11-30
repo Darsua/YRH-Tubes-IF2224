@@ -197,8 +197,13 @@ void SemanticAnalyzer::visitConstDecl(ConstDeclNode* node) {
             }
         } else if (auto charNode = dynamic_pointer_cast<CharNode>(node->getValue())) {
             constantValue = static_cast<int>(charNode->getValue());
+        } else if (auto boolNode = dynamic_pointer_cast<BoolNode>(node->getValue())) {
+            constantValue = boolNode->getValue() ? 1 : 0;
+        } else if (auto stringNode = dynamic_pointer_cast<StringNode>(node->getValue())) {
+            // String constants need pointer to string pool (not implemented yet)
+            // For now, store as 0
+            constantValue = 0;
         }
-        // String constants need pointer to string pool (not implemented yet)
     }
     entry.adr = constantValue;
     entry.link = 0;
