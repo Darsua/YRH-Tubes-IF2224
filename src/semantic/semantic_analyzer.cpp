@@ -507,12 +507,39 @@ void SemanticAnalyzer::visitWhile(WhileNode* node) {
 }
 
 void SemanticAnalyzer::visitFor(ForNode* node) {
+    // Validate loop control variable
+    string loopVar = node->getLoopVariable();
+    TabEntry* symbol = symbolTable.lookupSymbol(loopVar);
+    
+    if (!symbol) {
+        reportError("Loop variable '" + loopVar + "' not declared", node->getLineNumber());
+    } else {
+        // Check if it's actually a variable (not constant, procedure, etc.)
+        if (symbol->obj != static_cast<int>(ObjectClass::VARIABLE)) {
+            string objName = (symbol->obj == 0) ? "constant" :
+                            (symbol->obj == 2) ? "type" :
+                            (symbol->obj == 3) ? "procedure" :
+                            (symbol->obj == 4) ? "function" :
+                            (symbol->obj == 5) ? "reserved word" :
+                            (symbol->obj == 6) ? "program" : "identifier";
+            reportError("'" + loopVar + "' is a " + objName + ", not a variable - cannot be used as loop control variable",
+                        node->getLineNumber());
+        } else if (symbol->typ != static_cast<int>(TypeCode::INTS)) {
+            // Check if it's integer type
+            reportError("Loop variable '" + loopVar + "' must be of integer type",
+                        node->getLineNumber());
+        }
+    }
+    
+    // Process loop bounds
     if (node->getStartValue()) {
         node->getStartValue()->accept(this);
     }
     if (node->getEndValue()) {
         node->getEndValue()->accept(this);
     }
+    
+    // Process loop body
     if (node->getBody()) {
         node->getBody()->accept(this);
     }
