@@ -148,6 +148,14 @@ void SemanticAnalyzer::visitVarDecl(VarDeclNode* node) {
 void SemanticAnalyzer::visitConstDecl(ConstDeclNode* node) {
     if (!node) return;
 
+    // Check for redeclaration in current scope
+    TabEntry* existing = symbolTable.lookupSymbol(node->getName(), true);
+    if (existing) {
+        reportError("Constant '" + node->getName() + "' already declared in this scope",
+                    node->getLineNumber());
+        return;
+    }
+
     // Add constant to symbol table
     TabEntry entry;
     entry.identifier = node->getName();
@@ -207,6 +215,14 @@ void SemanticAnalyzer::visitConstDecl(ConstDeclNode* node) {
 
 void SemanticAnalyzer::visitTypeDecl(TypeDeclNode* node) {
     if (!node) return;
+
+    // Check for redeclaration in current scope
+    TabEntry* existing = symbolTable.lookupSymbol(node->getName(), true);
+    if (existing) {
+        reportError("Type '" + node->getName() + "' already declared in this scope",
+                    node->getLineNumber());
+        return;
+    }
 
     int atab_ref = 0;  // Will be set if this is an array type
 
