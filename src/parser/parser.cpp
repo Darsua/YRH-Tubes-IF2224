@@ -296,8 +296,17 @@ shared_ptr<ParseNode> Parser::parseConstDeclaration() {
                     advance();
                 }
             }
+        } else if (match(IDENTIFIER)) {
+            // Accept true/false as boolean constants
+            string idValue = token->getValue();
+            if (idValue == "true" || idValue == "false") {
+                constValue = idValue;
+                advance();
+            } else {
+                syntaxError("Expected constant value (number, string, true, or false)");
+            }
         } else {
-            syntaxError("Expected constant value (number or string)");
+            syntaxError("Expected constant value (number, string, true, or false)");
         }
 
         auto valueNode =
