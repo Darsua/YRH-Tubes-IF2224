@@ -95,18 +95,25 @@ void ASTBuilder::setPosition(shared_ptr<ASTNode> astNode, shared_ptr<ParseNode> 
 int ASTBuilder::extractNumberFromExpression(shared_ptr<ParseNode> expr) const {
     if (!expr) return 0;
 
+    // Check if it's an IDENTIFIER (constant reference)
+    if (expr->getType() == "IDENTIFIER") {
+        string constName = expr->getValue();
+        auto it = constantValues.find(constName);
+        if (it != constantValues.end()) {
+            return it->second;
+        }
+        return 0;  // Constant not found
+    }
+
     if (expr->getType() == "NUMBER") {
         const string s = expr->getValue();
         try {
             long long v = std::stoll(s);
-            // clamp to int range (or return as-is if you prefer)
             if (v < std::numeric_limits<int>::min() || v > std::numeric_limits<int>::max()) {
-                // out of int range -> return 0 to signal failure (caller should handle)
                 return 0;
             }
             return static_cast<int>(v);
         } catch (const std::invalid_argument&) {
-            // not a plain integer
             return 0;
         } catch (const std::out_of_range&) {
             return 0;
@@ -116,7 +123,6 @@ int ASTBuilder::extractNumberFromExpression(shared_ptr<ParseNode> expr) const {
     if (expr->getType() == "CHAR_LITERAL") {
         const string cs = expr->getValue();
         if (cs.empty()) return 0;
-        // handle simple escape like '\n', '\t', '\'' , '\\'
         if (cs.size() >= 2 && cs[0] == '\\') {
             char esc = cs[1];
             switch (esc) {
@@ -131,9 +137,32 @@ int ASTBuilder::extractNumberFromExpression(shared_ptr<ParseNode> expr) const {
         return static_cast<int>(cs[0]);
     }
 
-    for (const auto& child : expr->getChildren()) {
-        int result = extractNumberFromExpression(child);
-        if (result != 0) return result;
+    // Check for unary minus/plus pattern: ARITHMETIC_OPERATOR followed by NUMBER/IDENTIFIER
+    int sign = 1;
+    shared_ptr<ParseNode> numberNode = nullptr;
+    
+    for (size_t i = 0; i < expr->getChildren().size(); i++) {
+        auto child = expr->getChildren()[i];
+        if (!child) continue;
+        
+        if (child->getType() == "ARITHMETIC_OPERATOR") {
+            if (child->getValue() == "-") {
+                sign = -sign;
+            }
+        } else if (child->getType() == "NUMBER" || child->getType() == "IDENTIFIER" || child->getType() == "CHAR_LITERAL") {
+            numberNode = child;
+        } else {
+            // Recursively process non-operator children
+            int value = extractNumberFromExpression(child);
+            if (value != 0 || child->getType() == "expression" || child->getType() == "term" || child->getType() == "factor") {
+                return sign * value;
+            }
+        }
+    }
+    
+    if (numberNode) {
+        int value = extractNumberFromExpression(numberNode);
+        return sign * value;
     }
 
     return 0;
@@ -272,10 +301,18 @@ vector<shared_ptr<VarDeclNode>> ASTBuilder::convertVarDeclaration(shared_ptr<Par
         } else if (child->getType() == "type") {
             // Check if type is a custom type (IDENTIFIER) or primitive (KEYWORD)
             customTypeName = "";
+            shared_ptr<ArrayTypeNode> inlineArrayType = nullptr;
+            
             auto customTypeNode = findChild(child, "custom-type");
             if (customTypeNode) {
                 // custom-type node directly contains the type name as value
                 customTypeName = customTypeNode->getValue();
+            }
+            
+            // Check if type is inline array type
+            auto arrayTypeNode = findChild(child, "array-type");
+            if (arrayTypeNode) {
+                inlineArrayType = convertArrayType(arrayTypeNode);
             }
 
             // Get type for current identifier list
@@ -286,6 +323,9 @@ vector<shared_ptr<VarDeclNode>> ASTBuilder::convertVarDeclaration(shared_ptr<Par
                 auto varDecl = make_shared<VarDeclNode>(identPair.first, currentType);
                 if (!customTypeName.empty()) {
                     varDecl->setCustomTypeName(customTypeName);
+                }
+                if (inlineArrayType) {
+                    varDecl->setArrayType(inlineArrayType);
                 }
                 setPosition(varDecl, identPair.second);  // Set position from identifier token
                 varDecls.push_back(varDecl);
@@ -309,6 +349,26 @@ vector<shared_ptr<ConstDeclNode>> ASTBuilder::convertConstDeclaration(shared_ptr
     // const ID = <constant-value> ; [ID = <constant-value> ;]*
     const auto& children = node->getChildren();
 
+    // First pass: collect integer constant values for later use in array bounds
+    for (size_t i = 0; i < children.size(); i++) {
+        if (children[i] && children[i]->getType() == "IDENTIFIER") {
+            string constName = children[i]->getValue();
+            
+            // Look for constant-value node
+            if (i + 2 < children.size() && children[i + 2]->getType() == "constant-value") {
+                string valueStr = children[i + 2]->getValue();
+                try {
+                    // Try to parse as integer
+                    int intValue = std::stoi(valueStr);
+                    constantValues[constName] = intValue;
+                } catch (...) {
+                    // Not an integer, skip
+                }
+            }
+        }
+    }
+
+    // Second pass: create ConstDeclNode objects
     for (size_t i = 0; i < children.size(); i++) {
         if (children[i] && children[i]->getType() == "IDENTIFIER") {
             string constName = children[i]->getValue();
@@ -642,7 +702,17 @@ shared_ptr<ArrayTypeNode> ASTBuilder::convertArrayType(shared_ptr<ParseNode> nod
     } else {
         // Base case: simple element type
         DataType elemType = convertType(typeNode);
-        return make_shared<ArrayTypeNode>(lowBound, highBound, elemType);
+        auto arrayNode = make_shared<ArrayTypeNode>(lowBound, highBound, elemType);
+        
+        // Check if element type is custom type (IDENTIFIER)
+        auto customTypeNode = findChild(typeNode, "custom-type");
+        if (customTypeNode) {
+            // custom-type node has the type name as its value
+            string customTypeName = customTypeNode->getValue();
+            arrayNode->setCustomElementTypeName(customTypeName);
+        }
+        
+        return arrayNode;
     }
 }
 

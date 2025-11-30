@@ -88,9 +88,17 @@ void SemanticAnalyzer::visitVarDecl(VarDeclNode* node) {
     entry.identifier = node->getName();
     entry.obj = static_cast<int>(ObjectClass::VARIABLE);
 
+    // Check if variable has inline array type
+    auto inlineArrayType = node->getArrayType();
+    if (inlineArrayType) {
+        // Process inline array type to create ATAB entry
+        inlineArrayType->accept(this);
+        entry.typ = static_cast<int>(TypeCode::ARRAYS);
+        entry.ref = inlineArrayType->getArrayTableIndex();
+    }
     // Check if variable uses a custom type
-    string customType = node->getCustomTypeName();
-    if (!customType.empty()) {
+    else if (!node->getCustomTypeName().empty()) {
+        string customType = node->getCustomTypeName();
         // Lookup the custom type in symbol table
         TabEntry* typeEntry = symbolTable.lookupSymbol(customType, false);
         if (typeEntry && typeEntry->obj == static_cast<int>(ObjectClass::TYPE)) {
@@ -306,12 +314,42 @@ void SemanticAnalyzer::visitArrayType(ArrayTypeNode* node) {
         // elsz: size of one element (the entire nested array)
         arrayEntry.elsz = symbolTable.getArray(nestedAtabIndex)->size;
     } else {
-        // Simple array: element is a primitive type
+        // Simple array: element is a primitive type or custom type
         DataType elemType = node->getElementType();
-        int elementRef = 0;
+        string customTypeName = node->getCustomElementTypeName();
         int elementSize = 1;
 
-        if (elemType == DataType::INTEGER) {
+        // Check if element is a custom type (e.g., 'row', 'complex')
+        if (!customTypeName.empty()) {
+            // Lookup custom type in symbol table
+            TabEntry* typeEntry = symbolTable.lookupSymbol(customTypeName, false);
+            if (typeEntry && typeEntry->obj == static_cast<int>(ObjectClass::TYPE)) {
+                // Set etyp and eref based on the custom type
+                arrayEntry.etyp = typeEntry->typ;
+                arrayEntry.eref = typeEntry->ref;
+                
+                // Calculate element size
+                if (typeEntry->typ == static_cast<int>(TypeCode::ARRAYS)) {
+                    // Element is array - get size from ATAB
+                    AtabEntry* elementArray = symbolTable.getArray(typeEntry->ref);
+                    if (elementArray) {
+                        elementSize = elementArray->size;
+                    }
+                } else if (typeEntry->typ == static_cast<int>(TypeCode::RECORDS)) {
+                    // Element is record - size needs to be calculated from fields
+                    // For now, assume size 1 (would need record size calculation)
+                    elementSize = 1;
+                } else {
+                    // Primitive type
+                    elementSize = 1;
+                }
+            } else {
+                // Type not found
+                arrayEntry.etyp = static_cast<int>(TypeCode::NOTYP);
+                arrayEntry.eref = 0;
+                elementSize = 1;
+            }
+        } else if (elemType == DataType::INTEGER) {
             arrayEntry.etyp = static_cast<int>(TypeCode::INTS);
             elementSize = 1;
         } else if (elemType == DataType::REAL) {
@@ -328,7 +366,6 @@ void SemanticAnalyzer::visitArrayType(ArrayTypeNode* node) {
             elementSize = 1;
         }
 
-        arrayEntry.eref = elementRef;
         arrayEntry.elsz = elementSize;
     }
 
@@ -591,7 +628,8 @@ void SemanticAnalyzer::visitProcCall(ProcCallNode* node) {
         // Decorate the AST node with actual symbol table index
         // We need to find the actual index in the table
         int symIdx = -1;
-        for (size_t i = 0; i < symbolTable.getTabSize(); i++) {
+        int tabSize = symbolTable.getTabSize();
+        for (int i = 0; i < tabSize; i++) {
             const TabEntry* entry = symbolTable.getSymbol(i);
             if (entry && entry->identifier == node->getName()) {
                 symIdx = i;
@@ -741,7 +779,8 @@ void SemanticAnalyzer::visitVar(VarNode* node) {
 
     // Find the actual index in the symbol table
     int symIdx = -1;
-    for (size_t i = 0; i < symbolTable.getTabSize(); i++) {
+    int tabSize = symbolTable.getTabSize();
+    for (int i = 0; i < tabSize; i++) {
         const TabEntry* entry = symbolTable.getSymbol(i);
         if (entry && entry->identifier == node->getName()) {
             symIdx = i;
@@ -905,7 +944,7 @@ void SemanticAnalyzer::calculateVariableAddresses(int blockIdx) {
         // Skip if address already set (it's a parameter)
         if (entry->adr > 0 || (varOffset == 0 && entry->adr == 0)) {
             // For parameters, skip if part of block->psze
-            if (block->psze > 0 && varSize < static_cast<size_t>(block->psze)) {
+            if (block->psze > 0 && static_cast<int>(varSize) < block->psze) {
                 varSize++;
                 continue;
             }

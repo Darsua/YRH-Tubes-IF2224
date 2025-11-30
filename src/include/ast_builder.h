@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <map>
 
 using namespace std;
 
@@ -19,6 +20,7 @@ class ASTBuilder {
    private:
     shared_ptr<ParseNode> parseTree;
     vector<string> errors;
+    map<string, int> constantValues;  // Store constant values for array bounds
 
     // Helper functions
     bool isTerminal(shared_ptr<ParseNode> node) const;

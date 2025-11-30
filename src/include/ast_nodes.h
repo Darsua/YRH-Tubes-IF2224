@@ -7,6 +7,7 @@
 
 using namespace std;
 class ASTVisitor;
+class ArrayTypeNode;  // Forward declaration
 
 enum class DataType { VOID, INTEGER, REAL, BOOLEAN, CHAR, STRING, ARRAY, RECORD, UNKNOWN };
 
@@ -110,6 +111,7 @@ class VarDeclNode : public ASTNode {
     string name;
     DataType varType;
     string customTypeName;  // For custom types (e.g., "DaftarNilai")
+    shared_ptr<ArrayTypeNode> arrayType;  // For inline array declarations
     bool isParameter;       // true jika ini adalah parameter
     bool isVarParameter;    // true jika parameter by reference (var)
 
@@ -131,9 +133,15 @@ class VarDeclNode : public ASTNode {
     bool getIsVarParameter() const {
         return isVarParameter;
     }
+    shared_ptr<ArrayTypeNode> getArrayType() const {
+        return arrayType;
+    }
 
     void setCustomTypeName(const string& typeName) {
         customTypeName = typeName;
+    }
+    void setArrayType(shared_ptr<ArrayTypeNode> arrType) {
+        arrayType = arrType;
     }
     void setIsParameter(bool param) {
         isParameter = param;
@@ -196,6 +204,7 @@ class ArrayTypeNode : public ASTNode {
     int lowBound;
     int highBound;
     DataType elementType;
+    string customElementTypeName;  // For custom types like 'row', 'complex'
     shared_ptr<ArrayTypeNode> nestedElementType;  // For multi-dimensional arrays
     int arrayTableIndex;                          // Index di atab
 
@@ -211,6 +220,12 @@ class ArrayTypeNode : public ASTNode {
     }
     DataType getElementType() const {
         return elementType;
+    }
+    string getCustomElementTypeName() const {
+        return customElementTypeName;
+    }
+    void setCustomElementTypeName(const string& name) {
+        customElementTypeName = name;
     }
     shared_ptr<ArrayTypeNode> getNestedElementType() const {
         return nestedElementType;
