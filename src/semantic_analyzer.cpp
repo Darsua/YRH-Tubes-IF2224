@@ -101,7 +101,7 @@ void SemanticAnalyzer::visitVarDecl(VarDeclNode* node) {
             // Type not found, mark as unknown
             entry.typ = static_cast<int>(TypeCode::NOTYP);
             entry.ref = 0;
-            addError("Undefined type '" + customType + "'");
+            reportError("Undefined type '" + customType + "'", node->getLineNumber());
         }
     } else {
         // Map DataType to TypeCode for primitive types
@@ -132,7 +132,7 @@ void SemanticAnalyzer::visitVarDecl(VarDeclNode* node) {
     
     int idx = symbolTable.addSymbol(entry);
     if (idx < 0) {
-        addError("Variable '" + node->getName() + "' already declared");
+        reportError("Variable '" + node->getName() + "' already declared", node->getLineNumber());
     } else {
         // Decorate the AST node with symbol table information
         node->setSymbolTableIndex(idx);
@@ -187,7 +187,7 @@ void SemanticAnalyzer::visitConstDecl(ConstDeclNode* node) {
     
     int idx = symbolTable.addSymbol(entry);
     if (idx < 0) {
-        addError("Constant '" + node->getName() + "' already declared");
+            reportError("Constant '" + node->getName() + "' already declared", node->getLineNumber());
     } else {
         // Decorate the AST node with symbol table information
         node->setSymbolTableIndex(idx);
@@ -233,7 +233,7 @@ void SemanticAnalyzer::visitTypeDecl(TypeDeclNode* node) {
     
     int idx = symbolTable.addSymbol(entry);
     if (idx < 0) {
-        addError("Type '" + node->getName() + "' already declared");
+            reportError("Type '" + node->getName() + "' already declared", node->getLineNumber());
     } else {
         // Decorate the AST node with symbol table information
         node->setSymbolTableIndex(idx);
@@ -347,7 +347,7 @@ void SemanticAnalyzer::visitProcedureDecl(ProcedureDeclNode* node) {
     currentLevel = savedLevel + 1;
     
     if (idx < 0) {
-        addError("Procedure '" + node->getName() + "' already declared");
+            reportError("Procedure '" + node->getName() + "' already declared", node->getLineNumber());
     } else {
         // Decorate the AST node with symbol table information
         node->setSymbolTableIndex(idx);
@@ -412,7 +412,7 @@ void SemanticAnalyzer::visitFunctionDecl(FunctionDeclNode* node) {
     currentLevel = savedLevel + 1;
     
     if (idx < 0) {
-        addError("Function '" + node->getName() + "' already declared");
+           reportError("Function '" + node->getName() + "' already declared", node->getLineNumber());
     } else {
         // Decorate the AST node with symbol table information
         node->setSymbolTableIndex(idx);
@@ -489,14 +489,14 @@ void SemanticAnalyzer::visitProcCall(ProcCallNode* node) {
     
     auto* symbol = symbolTable.lookupSymbol(node->getName());
     if (!symbol) {
-        addError("Procedure/Function '" + node->getName() + "' not declared");
+        reportError("Procedure/Function '" + node->getName() + "' not declared", node->getLineNumber());
         node->setSymbolTableIndex(-1);
         node->setScopeLevel(currentLevel);
     } else {
         // Check if it's actually a procedure or function
         if (symbol->obj != static_cast<int>(ObjectClass::PROCEDURE) && 
             symbol->obj != static_cast<int>(ObjectClass::FUNCTION)) {
-            addError("'" + node->getName() + "' is not a procedure or function");
+            reportError("'" + node->getName() + "' is not a procedure or function", node->getLineNumber());
         }
         
         // Decorate the AST node with actual symbol table index
@@ -533,10 +533,10 @@ void SemanticAnalyzer::visitBinOp(BinOpNode* node) {
     // Arithmetic operators require numeric types
     if (op == "+" || op == "-" || op == "*" || op == "bagi" || op == "div" || op == "mod") {
         if (leftType != DataType::INTEGER && leftType != DataType::REAL && leftType != DataType::UNKNOWN) {
-            reportError("Arithmetic operator '" + op + "' requires numeric left operand");
+            reportError("Arithmetic operator '" + op + "' requires numeric left operand", node->getLineNumber());
         }
         if (rightType != DataType::INTEGER && rightType != DataType::REAL && rightType != DataType::UNKNOWN) {
-            reportError("Arithmetic operator '" + op + "' requires numeric right operand");
+            reportError("Arithmetic operator '" + op + "' requires numeric right operand", node->getLineNumber());
         }
         // Infer result type
         if (leftType == DataType::REAL || rightType == DataType::REAL) {
@@ -553,10 +553,10 @@ void SemanticAnalyzer::visitBinOp(BinOpNode* node) {
     // Logical operators
     else if (op == "dan" || op == "atau") {
         if (leftType != DataType::BOOLEAN && leftType != DataType::UNKNOWN) {
-            reportError("Logical operator '" + op + "' requires boolean left operand");
+            reportError("Logical operator '" + op + "' requires boolean left operand", node->getLineNumber());
         }
         if (rightType != DataType::BOOLEAN && rightType != DataType::UNKNOWN) {
-            reportError("Logical operator '" + op + "' requires boolean right operand");
+            reportError("Logical operator '" + op + "' requires boolean right operand", node->getLineNumber());
         }
         node->setDataType(DataType::BOOLEAN);
     }
@@ -601,7 +601,7 @@ void SemanticAnalyzer::visitVar(VarNode* node) {
     
     auto* symbol = symbolTable.lookupSymbol(node->getName());
     if (!symbol) {
-        addError("Variable '" + node->getName() + "' not declared");
+        reportError("Variable '" + node->getName() + "' not declared", node->getLineNumber());
         node->setDataType(DataType::UNKNOWN);
         node->setSymbolTableIndex(-1);
         node->setScopeLevel(currentLevel);

@@ -77,6 +77,23 @@ void ASTBuilder::error(const string& message) {
     errors.push_back("AST Builder Error: " + message);
 }
 
+void ASTBuilder::setPosition(shared_ptr<ASTNode> astNode, shared_ptr<ParseNode> parseNode) {
+    if (!astNode || !parseNode) return;
+    
+    // Set position from parse node
+    if (parseNode->getLine() > 0) {
+        astNode->setLineNumber(parseNode->getLine());
+    } else {
+        // Try to find position from first child with position info
+        for (const auto& child : parseNode->getChildren()) {
+            if (child && child->getLine() > 0) {
+                astNode->setLineNumber(child->getLine());
+                break;
+            }
+        }
+    }
+}
+
 int ASTBuilder::extractNumberFromExpression(shared_ptr<ParseNode> expr) const {
     // Navigate through expression tree to find NUMBER terminal
     // <expression> → <simple-expression> → <term> → <factor> → NUMBER
@@ -142,6 +159,7 @@ shared_ptr<ProgramNode> ASTBuilder::convertProgram(shared_ptr<ParseNode> node) {
     }
     
     auto programNode = make_shared<ProgramNode>(programName);
+    setPosition(programNode, node); // Set line number from program node
     
     // Find declaration part
     auto declPart = findChild(node, "declaration-part");
@@ -212,7 +230,7 @@ vector<shared_ptr<VarDeclNode>> ASTBuilder::convertVarDeclaration(shared_ptr<Par
     // <identifier-list> : <type> ; <identifier-list> : <type> ; ...
     const auto& children = node->getChildren();
     
-    vector<string> currentIdentifiers;
+    vector<pair<string, shared_ptr<ParseNode>>> currentIdentifiers; // name and parse node for position
     DataType currentType = DataType::UNKNOWN;
     string customTypeName = "";
     
@@ -220,11 +238,11 @@ vector<shared_ptr<VarDeclNode>> ASTBuilder::convertVarDeclaration(shared_ptr<Par
         if (!child) continue;
         
         if (child->getType() == "identifier-list") {
-            // Extract identifiers from this list
+            // Extract identifiers from this list with their positions
             currentIdentifiers.clear();
             for (const auto& idChild : child->getChildren()) {
                 if (idChild && idChild->getType() == "IDENTIFIER") {
-                    currentIdentifiers.push_back(idChild->getValue());
+                    currentIdentifiers.push_back({idChild->getValue(), idChild});
                 }
             }
         }
@@ -241,11 +259,12 @@ vector<shared_ptr<VarDeclNode>> ASTBuilder::convertVarDeclaration(shared_ptr<Par
             currentType = convertType(child);
             
             // Create VarDeclNode for each identifier in current group
-            for (const auto& ident : currentIdentifiers) {
-                auto varDecl = make_shared<VarDeclNode>(ident, currentType);
+            for (const auto& identPair : currentIdentifiers) {
+                auto varDecl = make_shared<VarDeclNode>(identPair.first, currentType);
                 if (!customTypeName.empty()) {
                     varDecl->setCustomTypeName(customTypeName);
                 }
+                setPosition(varDecl, identPair.second); // Set position from identifier token
                 varDecls.push_back(varDecl);
             }
             
@@ -285,10 +304,11 @@ vector<shared_ptr<ConstDeclNode>> ASTBuilder::convertConstDeclaration(shared_ptr
                     // Try to determine type from value string
                     if (!valStr.empty()) {
                         // Check if it's a string (has quotes)
-                        if ((valStr.front() == '\'' && valStr.back() == '\'') ||
+                            if ((valStr.front() == '\'' && valStr.back() == '\'') ||
                             (valStr.front() == '"' && valStr.back() == '"')) {
                             // String literal - remove quotes
                             value = make_shared<StringNode>(valStr.substr(1, valStr.length() - 2));
+                            setPosition(value, valNode);
                         }
                         // Check if it's a number
                         else if (isdigit(valStr[0]) || (valStr[0] == '-' && valStr.length() > 1)) {
@@ -297,14 +317,17 @@ vector<shared_ptr<ConstDeclNode>> ASTBuilder::convertConstDeclaration(shared_ptr
                             } else {
                                 value = make_shared<NumberNode>(stoi(valStr));
                             }
+                            setPosition(value, valNode);
                         }
                         // Check if it's boolean
                         else if (valStr == "true" || valStr == "false") {
                             value = make_shared<BoolNode>(valStr == "true");
+                            setPosition(value, valNode);
                         }
                         // Single character
                         else if (valStr.length() == 1) {
                             value = make_shared<CharNode>(valStr[0]);
+                            setPosition(value, valNode);
                         }
                     }
                 }
@@ -316,20 +339,24 @@ vector<shared_ptr<ConstDeclNode>> ASTBuilder::convertConstDeclaration(shared_ptr
                     } else {
                         value = make_shared<NumberNode>(stoi(numStr));
                     }
+                    setPosition(value, valNode);
                 }
                 else if (valNode->getType() == "STRING_LITERAL") {
                     value = make_shared<StringNode>(valNode->getValue());
+                    setPosition(value, valNode);
                 }
                 else if (valNode->getType() == "CHAR_LITERAL") {
                     string charStr = valNode->getValue();
                     if (!charStr.empty()) {
                         value = make_shared<CharNode>(charStr[0]);
+                        setPosition(value, valNode);
                     }
                 }
             }
             
             if (value) {
                 auto constDecl = make_shared<ConstDeclNode>(constName, value);
+                setPosition(constDecl, children[i]); // Set line from IDENTIFIER node
                 constDecls.push_back(constDecl);
             }
         }
@@ -377,18 +404,21 @@ vector<shared_ptr<TypeDeclNode>> ASTBuilder::convertTypeDeclaration(shared_ptr<P
             // Array type
             auto arrayNode = convertArrayType(arrayType);
             auto typeDecl = make_shared<TypeDeclNode>(typeName, DataType::ARRAY, arrayNode);
+            setPosition(typeDecl, child); // Set line from type-definition node
             typeDecls.push_back(typeDecl);
         }
         else if (recordType) {
             // Record type
             auto recordNode = convertRecordType(recordType);
             auto typeDecl = make_shared<TypeDeclNode>(typeName, DataType::RECORD, recordNode);
+            setPosition(typeDecl, child);
             typeDecls.push_back(typeDecl);
         }
         else {
             // Simple type alias (e.g., NilaiRange = integer)
             DataType baseType = convertType(typeNode);
             auto typeDecl = make_shared<TypeDeclNode>(typeName, baseType, nullptr);
+            setPosition(typeDecl, child);
             typeDecls.push_back(typeDecl);
         }
     }
@@ -411,6 +441,7 @@ shared_ptr<ProcedureDeclNode> ASTBuilder::convertProcedureDeclaration(shared_ptr
     }
     
     auto procDecl = make_shared<ProcedureDeclNode>(procName);
+    setPosition(procDecl, node); // Set line from procedure-declaration node
     
     // Find formal parameters
     auto paramList = findChild(node, "formal-parameter-list");
@@ -458,6 +489,7 @@ shared_ptr<FunctionDeclNode> ASTBuilder::convertFunctionDeclaration(shared_ptr<P
     DataType returnType = typeNode ? convertType(typeNode) : DataType::UNKNOWN;
     
     auto funcDecl = make_shared<FunctionDeclNode>(funcName, returnType);
+    setPosition(funcDecl, node); // Set line from function-declaration node
     
     // Find formal parameters
     auto paramList = findChild(node, "formal-parameter-list");
@@ -728,6 +760,7 @@ shared_ptr<AssignNode> ASTBuilder::convertAssignmentStatement(shared_ptr<ParseNo
     auto identifier = findChild(node, "IDENTIFIER");
     if (identifier) {
         target = make_shared<VarNode>(identifier->getValue());
+        setPosition(target, identifier);
         
         // Check for array access or record access
         // This would require more parsing of the parse tree structure
@@ -740,7 +773,9 @@ shared_ptr<AssignNode> ASTBuilder::convertAssignmentStatement(shared_ptr<ParseNo
     
     if (!target || !value) return nullptr;
     
-    return make_shared<AssignNode>(target, value);
+        auto assignNode = make_shared<AssignNode>(target, value);
+        setPosition(assignNode, node); // Set line from assignment-statement node
+        return assignNode;
 }
 
 shared_ptr<IfNode> ASTBuilder::convertIfStatement(shared_ptr<ParseNode> node) {
@@ -914,6 +949,9 @@ shared_ptr<ProcCallNode> ASTBuilder::convertProcedureCall(shared_ptr<ParseNode> 
     }
     
     auto procCall = make_shared<ProcCallNode>(procName);
+    // Set position from identifier if available, otherwise from the whole node
+    if (identifier) setPosition(procCall, identifier);
+    else setPosition(procCall, node);
     
     // Find parameter list
     auto paramList = findChild(node, "parameter-list");
@@ -956,7 +994,14 @@ shared_ptr<ASTNode> ASTBuilder::convertExpression(shared_ptr<ParseNode> node) {
             }
         }
         
-        return make_shared<BinOpNode>(op, left, right);
+        {
+            auto bin = make_shared<BinOpNode>(op, left, right);
+            setPosition(bin, node);
+            return bin;
+        }
+    // Ensure binop has a position (from this expression node)
+    // Note: we create it above and want to set its position before returning
+    // However previous line returned directly; adjust to set position.
     }
     
     return nullptr;
@@ -1000,7 +1045,9 @@ shared_ptr<ASTNode> ASTBuilder::convertSimpleExpression(shared_ptr<ParseNode> no
     // Combine terms with operators (left-to-right)
     for (size_t i = 1; i < terms.size() && i - 1 < operators.size(); i++) {
         auto right = convertTerm(terms[i]);
-        result = make_shared<BinOpNode>(operators[i - 1], result, right);
+        auto bin = make_shared<BinOpNode>(operators[i - 1], result, right);
+        setPosition(bin, node);
+        result = bin;
     }
     
     return result;
@@ -1047,7 +1094,9 @@ shared_ptr<ASTNode> ASTBuilder::convertTerm(shared_ptr<ParseNode> node) {
     // Combine factors with operators (left-to-right)
     for (size_t i = 1; i < factors.size() && i - 1 < operators.size(); i++) {
         auto right = convertFactor(factors[i]);
-        result = make_shared<BinOpNode>(operators[i - 1], result, right);
+        auto bin = make_shared<BinOpNode>(operators[i - 1], result, right);
+        setPosition(bin, node);
+        result = bin;
     }
     
     return result;
@@ -1064,23 +1113,32 @@ shared_ptr<ASTNode> ASTBuilder::convertFactor(shared_ptr<ParseNode> node) {
         if (child->getType() == "IDENTIFIER") {
             // Could be variable, constant, or function call
             // For now, treat as variable reference
-            return make_shared<VarNode>(child->getValue());
+            auto varNode = make_shared<VarNode>(child->getValue());
+            setPosition(varNode, child);
+            return varNode;
         }
         else if (child->getType() == "NUMBER") {
             string numStr = child->getValue();
+            shared_ptr<ASTNode> numNode;
             if (numStr.find('.') != string::npos) {
-                return make_shared<NumberNode>(stod(numStr));
+                numNode = make_shared<NumberNode>(stod(numStr));
             } else {
-                return make_shared<NumberNode>(stoi(numStr));
+                numNode = make_shared<NumberNode>(stoi(numStr));
             }
+            setPosition(numNode, child);
+            return numNode;
         }
         else if (child->getType() == "STRING_LITERAL") {
-            return make_shared<StringNode>(child->getValue());
+            auto strNode = make_shared<StringNode>(child->getValue());
+            setPosition(strNode, child);
+            return strNode;
         }
         else if (child->getType() == "CHAR_LITERAL") {
             string charStr = child->getValue();
             if (!charStr.empty()) {
-                return make_shared<CharNode>(charStr[0]);
+                auto cnode = make_shared<CharNode>(charStr[0]);
+                setPosition(cnode, child);
+                return cnode;
             }
         }
         else if (child->getType() == "expression") {
@@ -1090,7 +1148,18 @@ shared_ptr<ASTNode> ASTBuilder::convertFactor(shared_ptr<ParseNode> node) {
         else if (child->getType() == "KEYWORD" && child->getValue() == "not") {
             // Unary not operator
             auto operand = convertFactor(node);
-            return make_shared<UnaryOpNode>("not", operand);
+            auto un = make_shared<UnaryOpNode>("not", operand);
+            setPosition(un, child);
+            return un;
+        }
+        else if (child->getType() == "KEYWORD") {
+            // Handle boolean literals true/false
+            string val = child->getValue();
+            if (val == "true" || val == "false") {
+                auto b = make_shared<BoolNode>(val == "true");
+                setPosition(b, child);
+                return b;
+            }
         }
         else if (child->getType() == "factor") {
             // Recursive case
@@ -1109,7 +1178,9 @@ shared_ptr<ASTNode> ASTBuilder::convertVariableAccess(shared_ptr<ParseNode> node
     
     auto identifier = findChild(node, "IDENTIFIER");
     if (identifier) {
-        return make_shared<VarNode>(identifier->getValue());
+        auto varNode = make_shared<VarNode>(identifier->getValue());
+        setPosition(varNode, identifier);
+        return varNode;
     }
     
     return nullptr;

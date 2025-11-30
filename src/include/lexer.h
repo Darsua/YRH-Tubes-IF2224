@@ -20,6 +20,7 @@ private:
     LexerMode mode;
     DFA dfa;
     map<string, Type> stateToTokenType;
+    int currentLine;
     
     // Common helper methods
     bool isPascalKeyword(const string& word);
@@ -28,13 +29,15 @@ private:
     void skipWhitespace(FILE* file);
     void skipBraceComment(FILE* file);
     void skipParenComment(FILE* file);
+    int getChar(FILE* file);
+    void ungetChar(int c, FILE* file);
     
     // Switch-based lexer methods
     Token* readTokenSwitch(FILE* file);
     
     // DFA-based lexer methods
     void initializeStateMapping();
-    Token* createToken(const string& state, const string& value);
+    Token* createToken(const string& state, const string& value, int line);
     Token* readTokenDFA(FILE* file);
     
 public:
