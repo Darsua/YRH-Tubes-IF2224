@@ -1,0 +1,660 @@
+Using DFA-based lexer
+DFA rules file: rules/pascal_lexicon.dfa
+Processing file: test/milestone-3/test_var_params.pas
+----------------------------------------
+KEYWORD(program)
+IDENTIFIER(TestVarParameters)
+SEMICOLON(;)
+KEYWORD(variabel)
+IDENTIFIER(x)
+COMMA(,)
+IDENTIFIER(y)
+COLON(:)
+KEYWORD(integer)
+SEMICOLON(;)
+IDENTIFIER(hasil)
+COLON(:)
+KEYWORD(integer)
+SEMICOLON(;)
+KEYWORD(prosedur)
+IDENTIFIER(swap_values)
+LPARENTHESIS(()
+KEYWORD(variabel)
+IDENTIFIER(a)
+COMMA(,)
+IDENTIFIER(b)
+COLON(:)
+KEYWORD(integer)
+RPARENTHESIS())
+SEMICOLON(;)
+KEYWORD(variabel)
+IDENTIFIER(temp)
+COLON(:)
+KEYWORD(integer)
+SEMICOLON(;)
+KEYWORD(mulai)
+IDENTIFIER(temp)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(a)
+SEMICOLON(;)
+IDENTIFIER(a)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(b)
+SEMICOLON(;)
+IDENTIFIER(b)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(temp)
+KEYWORD(selesai)
+SEMICOLON(;)
+KEYWORD(prosedur)
+IDENTIFIER(add_one)
+LPARENTHESIS(()
+IDENTIFIER(n)
+COLON(:)
+KEYWORD(integer)
+RPARENTHESIS())
+SEMICOLON(;)
+KEYWORD(mulai)
+IDENTIFIER(n)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(n)
+ARITHMETIC_OPERATOR(+)
+NUMBER(1)
+KEYWORD(selesai)
+SEMICOLON(;)
+KEYWORD(fungsi)
+IDENTIFIER(compute)
+LPARENTHESIS(()
+KEYWORD(variabel)
+IDENTIFIER(p)
+COLON(:)
+KEYWORD(integer)
+SEMICOLON(;)
+IDENTIFIER(q)
+COLON(:)
+KEYWORD(integer)
+RPARENTHESIS())
+COLON(:)
+KEYWORD(integer)
+SEMICOLON(;)
+KEYWORD(mulai)
+IDENTIFIER(p)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(p)
+ARITHMETIC_OPERATOR(*)
+NUMBER(2)
+SEMICOLON(;)
+IDENTIFIER(compute)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(p)
+ARITHMETIC_OPERATOR(+)
+IDENTIFIER(q)
+KEYWORD(selesai)
+SEMICOLON(;)
+KEYWORD(mulai)
+IDENTIFIER(x)
+ASSIGN_OPERATOR(:=)
+NUMBER(10)
+SEMICOLON(;)
+IDENTIFIER(y)
+ASSIGN_OPERATOR(:=)
+NUMBER(20)
+SEMICOLON(;)
+IDENTIFIER(swap_values)
+LPARENTHESIS(()
+IDENTIFIER(x)
+COMMA(,)
+IDENTIFIER(y)
+RPARENTHESIS())
+SEMICOLON(;)
+IDENTIFIER(writeln)
+LPARENTHESIS(()
+STRING_LITERAL(x=)
+COMMA(,)
+IDENTIFIER(x)
+COMMA(,)
+STRING_LITERAL( y=)
+COMMA(,)
+IDENTIFIER(y)
+RPARENTHESIS())
+SEMICOLON(;)
+IDENTIFIER(add_one)
+LPARENTHESIS(()
+IDENTIFIER(x)
+RPARENTHESIS())
+SEMICOLON(;)
+IDENTIFIER(writeln)
+LPARENTHESIS(()
+STRING_LITERAL(x after add_one=)
+COMMA(,)
+IDENTIFIER(x)
+RPARENTHESIS())
+SEMICOLON(;)
+IDENTIFIER(hasil)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(compute)
+LPARENTHESIS(()
+IDENTIFIER(x)
+COMMA(,)
+IDENTIFIER(y)
+RPARENTHESIS())
+SEMICOLON(;)
+IDENTIFIER(writeln)
+LPARENTHESIS(()
+STRING_LITERAL(hasil=)
+COMMA(,)
+IDENTIFIER(hasil)
+COMMA(,)
+STRING_LITERAL( x=)
+COMMA(,)
+IDENTIFIER(x)
+RPARENTHESIS())
+KEYWORD(selesai)
+DOT(.)
+----------------------------------------
+Tokenization completed successfully!
+Total tokens: 149
+----------------------------------------
+Starting syntax analysis...
+----------------------------------------
+----------------------------------------
+Parse Tree:
+----------------------------------------
+<program>
+├── <program-header>
+│   ├── KEYWORD(program)
+│   ├── IDENTIFIER(TestVarParameters)
+│   └── SEMICOLON(;)
+├── <declaration-part>
+│   ├── <var-declaration>
+│   │   ├── KEYWORD(variabel)
+│   │   ├── <identifier-list>
+│   │   │   ├── IDENTIFIER(x)
+│   │   │   ├── COMMA(,)
+│   │   │   └── IDENTIFIER(y)
+│   │   ├── COLON(:)
+│   │   ├── <type>
+│   │   │   └── KEYWORD(integer)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <identifier-list>
+│   │   │   └── IDENTIFIER(hasil)
+│   │   ├── COLON(:)
+│   │   ├── <type>
+│   │   │   └── KEYWORD(integer)
+│   │   └── SEMICOLON(;)
+│   ├── <subprogram-declaration>
+│   │   └── <procedure-declaration>
+│   │       ├── KEYWORD(prosedur)
+│   │       ├── IDENTIFIER(swap_values)
+│   │       ├── <formal-parameter-list>
+│   │       │   ├── LPARENTHESIS(()
+│   │       │   ├── KEYWORD(variabel)
+│   │       │   ├── <identifier-list>
+│   │       │   │   ├── IDENTIFIER(a)
+│   │       │   │   ├── COMMA(,)
+│   │       │   │   └── IDENTIFIER(b)
+│   │       │   ├── COLON(:)
+│   │       │   ├── <type>
+│   │       │   │   └── KEYWORD(integer)
+│   │       │   └── RPARENTHESIS())
+│   │       ├── SEMICOLON(;)
+│   │       ├── <declaration-part>
+│   │       │   └── <var-declaration>
+│   │       │       ├── KEYWORD(variabel)
+│   │       │       ├── <identifier-list>
+│   │       │       │   └── IDENTIFIER(temp)
+│   │       │       ├── COLON(:)
+│   │       │       ├── <type>
+│   │       │       │   └── KEYWORD(integer)
+│   │       │       └── SEMICOLON(;)
+│   │       ├── <compound-statement>
+│   │       │   ├── KEYWORD(mulai)
+│   │       │   ├── <statement-list>
+│   │       │   │   ├── <assignment-statement>
+│   │       │   │   │   ├── IDENTIFIER(temp)
+│   │       │   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │       │   │   │   └── <expression>
+│   │       │   │   │       └── <simple-expression>
+│   │       │   │   │           └── <term>
+│   │       │   │   │               └── <factor>
+│   │       │   │   │                   └── IDENTIFIER(a)
+│   │       │   │   ├── SEMICOLON(;)
+│   │       │   │   ├── <assignment-statement>
+│   │       │   │   │   ├── IDENTIFIER(a)
+│   │       │   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │       │   │   │   └── <expression>
+│   │       │   │   │       └── <simple-expression>
+│   │       │   │   │           └── <term>
+│   │       │   │   │               └── <factor>
+│   │       │   │   │                   └── IDENTIFIER(b)
+│   │       │   │   ├── SEMICOLON(;)
+│   │       │   │   └── <assignment-statement>
+│   │       │   │       ├── IDENTIFIER(b)
+│   │       │   │       ├── ASSIGN_OPERATOR(:=)
+│   │       │   │       └── <expression>
+│   │       │   │           └── <simple-expression>
+│   │       │   │               └── <term>
+│   │       │   │                   └── <factor>
+│   │       │   │                       └── IDENTIFIER(temp)
+│   │       │   └── KEYWORD(selesai)
+│   │       └── SEMICOLON(;)
+│   ├── <subprogram-declaration>
+│   │   └── <procedure-declaration>
+│   │       ├── KEYWORD(prosedur)
+│   │       ├── IDENTIFIER(add_one)
+│   │       ├── <formal-parameter-list>
+│   │       │   ├── LPARENTHESIS(()
+│   │       │   ├── <identifier-list>
+│   │       │   │   └── IDENTIFIER(n)
+│   │       │   ├── COLON(:)
+│   │       │   ├── <type>
+│   │       │   │   └── KEYWORD(integer)
+│   │       │   └── RPARENTHESIS())
+│   │       ├── SEMICOLON(;)
+│   │       ├── <declaration-part>
+│   │       ├── <compound-statement>
+│   │       │   ├── KEYWORD(mulai)
+│   │       │   ├── <statement-list>
+│   │       │   │   └── <assignment-statement>
+│   │       │   │       ├── IDENTIFIER(n)
+│   │       │   │       ├── ASSIGN_OPERATOR(:=)
+│   │       │   │       └── <expression>
+│   │       │   │           └── <simple-expression>
+│   │       │   │               ├── <term>
+│   │       │   │               │   └── <factor>
+│   │       │   │               │       └── IDENTIFIER(n)
+│   │       │   │               ├── ARITHMETIC_OPERATOR(+)
+│   │       │   │               └── <term>
+│   │       │   │                   └── <factor>
+│   │       │   │                       └── NUMBER(1)
+│   │       │   └── KEYWORD(selesai)
+│   │       └── SEMICOLON(;)
+│   └── <subprogram-declaration>
+│       └── <function-declaration>
+│           ├── KEYWORD(fungsi)
+│           ├── IDENTIFIER(compute)
+│           ├── <formal-parameter-list>
+│           │   ├── LPARENTHESIS(()
+│           │   ├── KEYWORD(variabel)
+│           │   ├── <identifier-list>
+│           │   │   └── IDENTIFIER(p)
+│           │   ├── COLON(:)
+│           │   ├── <type>
+│           │   │   └── KEYWORD(integer)
+│           │   ├── SEMICOLON(;)
+│           │   ├── <identifier-list>
+│           │   │   └── IDENTIFIER(q)
+│           │   ├── COLON(:)
+│           │   ├── <type>
+│           │   │   └── KEYWORD(integer)
+│           │   └── RPARENTHESIS())
+│           ├── COLON(:)
+│           ├── <type>
+│           │   └── KEYWORD(integer)
+│           ├── SEMICOLON(;)
+│           ├── <declaration-part>
+│           ├── <compound-statement>
+│           │   ├── KEYWORD(mulai)
+│           │   ├── <statement-list>
+│           │   │   ├── <assignment-statement>
+│           │   │   │   ├── IDENTIFIER(p)
+│           │   │   │   ├── ASSIGN_OPERATOR(:=)
+│           │   │   │   └── <expression>
+│           │   │   │       └── <simple-expression>
+│           │   │   │           └── <term>
+│           │   │   │               ├── <factor>
+│           │   │   │               │   └── IDENTIFIER(p)
+│           │   │   │               ├── ARITHMETIC_OPERATOR(*)
+│           │   │   │               └── <factor>
+│           │   │   │                   └── NUMBER(2)
+│           │   │   ├── SEMICOLON(;)
+│           │   │   └── <assignment-statement>
+│           │   │       ├── IDENTIFIER(compute)
+│           │   │       ├── ASSIGN_OPERATOR(:=)
+│           │   │       └── <expression>
+│           │   │           └── <simple-expression>
+│           │   │               ├── <term>
+│           │   │               │   └── <factor>
+│           │   │               │       └── IDENTIFIER(p)
+│           │   │               ├── ARITHMETIC_OPERATOR(+)
+│           │   │               └── <term>
+│           │   │                   └── <factor>
+│           │   │                       └── IDENTIFIER(q)
+│           │   └── KEYWORD(selesai)
+│           └── SEMICOLON(;)
+├── <compound-statement>
+│   ├── KEYWORD(mulai)
+│   ├── <statement-list>
+│   │   ├── <assignment-statement>
+│   │   │   ├── IDENTIFIER(x)
+│   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │   │   └── <expression>
+│   │   │       └── <simple-expression>
+│   │   │           └── <term>
+│   │   │               └── <factor>
+│   │   │                   └── NUMBER(10)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <assignment-statement>
+│   │   │   ├── IDENTIFIER(y)
+│   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │   │   └── <expression>
+│   │   │       └── <simple-expression>
+│   │   │           └── <term>
+│   │   │               └── <factor>
+│   │   │                   └── NUMBER(20)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <procedure-call>
+│   │   │   ├── IDENTIFIER(swap_values)
+│   │   │   ├── LPARENTHESIS(()
+│   │   │   ├── <parameter-list>
+│   │   │   │   ├── <expression>
+│   │   │   │   │   └── <simple-expression>
+│   │   │   │   │       └── <term>
+│   │   │   │   │           └── <factor>
+│   │   │   │   │               └── IDENTIFIER(x)
+│   │   │   │   ├── COMMA(,)
+│   │   │   │   └── <expression>
+│   │   │   │       └── <simple-expression>
+│   │   │   │           └── <term>
+│   │   │   │               └── <factor>
+│   │   │   │                   └── IDENTIFIER(y)
+│   │   │   ├── RPARENTHESIS())
+│   │   │   └── SEMICOLON(;)
+│   │   ├── <procedure-call>
+│   │   │   ├── IDENTIFIER(writeln)
+│   │   │   ├── LPARENTHESIS(()
+│   │   │   ├── <parameter-list>
+│   │   │   │   ├── <expression>
+│   │   │   │   │   └── <simple-expression>
+│   │   │   │   │       └── <term>
+│   │   │   │   │           └── <factor>
+│   │   │   │   │               └── STRING_LITERAL(x=)
+│   │   │   │   ├── COMMA(,)
+│   │   │   │   ├── <expression>
+│   │   │   │   │   └── <simple-expression>
+│   │   │   │   │       └── <term>
+│   │   │   │   │           └── <factor>
+│   │   │   │   │               └── IDENTIFIER(x)
+│   │   │   │   ├── COMMA(,)
+│   │   │   │   ├── <expression>
+│   │   │   │   │   └── <simple-expression>
+│   │   │   │   │       └── <term>
+│   │   │   │   │           └── <factor>
+│   │   │   │   │               └── STRING_LITERAL( y=)
+│   │   │   │   ├── COMMA(,)
+│   │   │   │   └── <expression>
+│   │   │   │       └── <simple-expression>
+│   │   │   │           └── <term>
+│   │   │   │               └── <factor>
+│   │   │   │                   └── IDENTIFIER(y)
+│   │   │   ├── RPARENTHESIS())
+│   │   │   └── SEMICOLON(;)
+│   │   ├── <procedure-call>
+│   │   │   ├── IDENTIFIER(add_one)
+│   │   │   ├── LPARENTHESIS(()
+│   │   │   ├── <parameter-list>
+│   │   │   │   └── <expression>
+│   │   │   │       └── <simple-expression>
+│   │   │   │           └── <term>
+│   │   │   │               └── <factor>
+│   │   │   │                   └── IDENTIFIER(x)
+│   │   │   ├── RPARENTHESIS())
+│   │   │   └── SEMICOLON(;)
+│   │   ├── <procedure-call>
+│   │   │   ├── IDENTIFIER(writeln)
+│   │   │   ├── LPARENTHESIS(()
+│   │   │   ├── <parameter-list>
+│   │   │   │   ├── <expression>
+│   │   │   │   │   └── <simple-expression>
+│   │   │   │   │       └── <term>
+│   │   │   │   │           └── <factor>
+│   │   │   │   │               └── STRING_LITERAL(x after add_one=)
+│   │   │   │   ├── COMMA(,)
+│   │   │   │   └── <expression>
+│   │   │   │       └── <simple-expression>
+│   │   │   │           └── <term>
+│   │   │   │               └── <factor>
+│   │   │   │                   └── IDENTIFIER(x)
+│   │   │   ├── RPARENTHESIS())
+│   │   │   └── SEMICOLON(;)
+│   │   ├── <assignment-statement>
+│   │   │   ├── IDENTIFIER(hasil)
+│   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │   │   └── <expression>
+│   │   │       └── <simple-expression>
+│   │   │           └── <term>
+│   │   │               └── <factor>
+│   │   │                   ├── IDENTIFIER(compute)
+│   │   │                   └── <parameter-list>
+│   │   │                       ├── <expression>
+│   │   │                       │   └── <simple-expression>
+│   │   │                       │       └── <term>
+│   │   │                       │           └── <factor>
+│   │   │                       │               └── IDENTIFIER(x)
+│   │   │                       ├── COMMA(,)
+│   │   │                       └── <expression>
+│   │   │                           └── <simple-expression>
+│   │   │                               └── <term>
+│   │   │                                   └── <factor>
+│   │   │                                       └── IDENTIFIER(y)
+│   │   ├── SEMICOLON(;)
+│   │   └── <procedure-call>
+│   │       ├── IDENTIFIER(writeln)
+│   │       ├── LPARENTHESIS(()
+│   │       ├── <parameter-list>
+│   │       │   ├── <expression>
+│   │       │   │   └── <simple-expression>
+│   │       │   │       └── <term>
+│   │       │   │           └── <factor>
+│   │       │   │               └── STRING_LITERAL(hasil=)
+│   │       │   ├── COMMA(,)
+│   │       │   ├── <expression>
+│   │       │   │   └── <simple-expression>
+│   │       │   │       └── <term>
+│   │       │   │           └── <factor>
+│   │       │   │               └── IDENTIFIER(hasil)
+│   │       │   ├── COMMA(,)
+│   │       │   ├── <expression>
+│   │       │   │   └── <simple-expression>
+│   │       │   │       └── <term>
+│   │       │   │           └── <factor>
+│   │       │   │               └── STRING_LITERAL( x=)
+│   │       │   ├── COMMA(,)
+│   │       │   └── <expression>
+│   │       │       └── <simple-expression>
+│   │       │           └── <term>
+│   │       │               └── <factor>
+│   │       │                   └── IDENTIFIER(x)
+│   │       └── RPARENTHESIS())
+│   └── KEYWORD(selesai)
+└── DOT(.)
+----------------------------------------
+Syntax analysis completed successfully!
+----------------------------------------
+Building AST...
+----------------------------------------
+AST built successfully!
+----------------------------------------
+Starting semantic analysis...
+----------------------------------------
+✓ No semantic errors found
+----------------------------------------
+SYMBOL TABLE:
+----------------------------------------
+
+=== TAB (Identifier Table) ===
+  Idx     Identifier  Link         Obj      Type   Ref  Nrm  Lev   Adr
+--------------------------------------------------------------------------------
+    0            dan     0    RESERVED     NOTYP     0    1    0     0
+    1          larik     0    RESERVED     NOTYP     0    1    0     0
+    2          mulai     1    RESERVED     NOTYP     0    1    0     0
+    3           case     2    RESERVED     NOTYP     0    1    0     0
+    4      konstanta     3    RESERVED     NOTYP     0    1    0     0
+    5           bagi     4    RESERVED     NOTYP     0    1    0     0
+    6       turun_ke     5    RESERVED     NOTYP     0    1    0     0
+    7        lakukan     6    RESERVED     NOTYP     0    1    0     0
+    8     selain_itu     7    RESERVED     NOTYP     0    1    0     0
+    9        selesai     8    RESERVED     NOTYP     0    1    0     0
+   10          untuk     9    RESERVED     NOTYP     0    1    0     0
+   11         fungsi    10    RESERVED     NOTYP     0    1    0     0
+   12           jika    11    RESERVED     NOTYP     0    1    0     0
+   13            mod    12    RESERVED     NOTYP     0    1    0     0
+   14          tidak    13    RESERVED     NOTYP     0    1    0     0
+   15           dari    14    RESERVED     NOTYP     0    1    0     0
+   16           atau    15    RESERVED     NOTYP     0    1    0     0
+   17       prosedur    16    RESERVED     NOTYP     0    1    0     0
+   18        program    17    RESERVED     NOTYP     0    1    0     0
+   19         record    18    RESERVED     NOTYP     0    1    0     0
+   20         ulangi    19    RESERVED     NOTYP     0    1    0     0
+   21         string    20    RESERVED     NOTYP     0    1    0     0
+   22           maka    21    RESERVED     NOTYP     0    1    0     0
+   23             ke    22    RESERVED     NOTYP     0    1    0     0
+   24           tipe    23    RESERVED     NOTYP     0    1    0     0
+   25         sampai    24    RESERVED     NOTYP     0    1    0     0
+   26       variabel    25    RESERVED     NOTYP     0    1    0     0
+   27         selama    26    RESERVED     NOTYP     0    1    0     0
+   28         packed    27    RESERVED     NOTYP     0    1    0     0
+   29        integer    28        TYPE       INT     0    1    0     1
+   30           real    29        TYPE      REAL     0    1    0     1
+   31        boolean    30        TYPE      BOOL     0    1    0     1
+   32           char    31        TYPE      CHAR     0    1    0     1
+   33           true    32       CONST      BOOL     1    1    0     1
+   34          false    33       CONST      BOOL     0    1    0     0
+   35           read    34        PROC     NOTYP     0    1    0     0
+   36         readln    35        PROC     NOTYP     0    1    0     1
+   37          write    36        PROC     NOTYP     0    1    0     2
+   38        writeln    37        PROC     NOTYP     0    1    0     3
+   39TestVarParameters    38     PROGRAM     NOTYP     0    1    0     0
+   40              x    39         VAR       INT     0    1    0     0
+   41              y    40         VAR       INT     0    1    0     1
+   42          hasil    41         VAR       INT     0    1    0     2
+   43    swap_values    42        PROC     NOTYP     1    1    0     1
+   44              a    43         VAR       INT     0    0    1     0
+   45              b    44         VAR       INT     0    0    1     1
+   46           temp    45         VAR       INT     0    1    1     0
+   47        add_one    46        PROC     NOTYP     2    1    0     2
+   48              n    47         VAR       INT     0    1    1     0
+   49        compute    48        FUNC       INT     3    1    0     3
+   50              p    49         VAR       INT     0    0    1     0
+   51              q    50         VAR       INT     0    1    1     1
+
+=== BTAB (Block Table) ===
+  Idx    Last    Lpar    Psze    Vsze
+----------------------------------------
+    0      42       0       0       3
+    1      46      45       2       1
+    2      48      48       1       0
+    3      51      51       2       0
+    4      51       0       0       0
+----------------------------------------
+DECORATED AST:
+----------------------------------------
+ProgramNode(name: 'TestVarParameters', tab_index: 39)
+  Declarations:
+    VarDecl(name: 'x', type: integer, tab_index: 40, level: 0)
+    VarDecl(name: 'y', type: integer, tab_index: 41, level: 0)
+    VarDecl(name: 'hasil', type: integer, tab_index: 42, level: 0)
+    ProcedureDecl(name: 'swap_values', tab_index: 43)
+      Parameters:
+        VarDecl(name: 'a', type: integer, tab_index: 44, level: 1, parameter, var)
+        VarDecl(name: 'b', type: integer, tab_index: 45, level: 1, parameter, var)
+      Declarations:
+        VarDecl(name: 'temp', type: integer, tab_index: 46, level: 1)
+      Body:
+        CompoundStatement
+          Assign
+            Target:
+              Var(name: 'temp', tab_index: 46, type: integer, level: 1)
+            Value:
+              Var(name: 'a', tab_index: 44, type: integer, level: 1)
+          Assign
+            Target:
+              Var(name: 'a', tab_index: 44, type: integer, level: 1)
+            Value:
+              Var(name: 'b', tab_index: 45, type: integer, level: 1)
+          Assign
+            Target:
+              Var(name: 'b', tab_index: 45, type: integer, level: 1)
+            Value:
+              Var(name: 'temp', tab_index: 46, type: integer, level: 1)
+    ProcedureDecl(name: 'add_one', tab_index: 47)
+      Parameters:
+        VarDecl(name: 'n', type: integer, tab_index: 48, level: 1, parameter)
+      Body:
+        CompoundStatement
+          Assign
+            Target:
+              Var(name: 'n', tab_index: 48, type: integer, level: 1)
+            Value:
+              BinOp(op: '+', type: integer)
+                Left:
+                  Var(name: 'n', tab_index: 48, type: integer, level: 1)
+                Right:
+                  Number(int: 1, type: integer)
+    FunctionDecl(name: 'compute', return_type: integer, tab_index: 49)
+      Parameters:
+        VarDecl(name: 'p', type: integer, tab_index: 50, level: 1, parameter, var)
+        VarDecl(name: 'q', type: integer, tab_index: 51, level: 1, parameter)
+      Body:
+        CompoundStatement
+          Assign
+            Target:
+              Var(name: 'p', tab_index: 50, type: integer, level: 1)
+            Value:
+              BinOp(op: '*', type: integer)
+                Left:
+                  Var(name: 'p', tab_index: 50, type: integer, level: 1)
+                Right:
+                  Number(int: 2, type: integer)
+          Assign
+            Target:
+              Var(name: 'compute', tab_index: 49, type: integer)
+            Value:
+              BinOp(op: '+', type: integer)
+                Left:
+                  Var(name: 'p', tab_index: 50, type: integer, level: 1)
+                Right:
+                  Var(name: 'q', tab_index: 51, type: integer, level: 1)
+  Body:
+    CompoundStatement
+      Assign
+        Target:
+          Var(name: 'x', tab_index: 40, type: integer)
+        Value:
+          Number(int: 10, type: integer)
+      Assign
+        Target:
+          Var(name: 'y', tab_index: 41, type: integer)
+        Value:
+          Number(int: 20, type: integer)
+      ProcCall(name: 'swap_values', tab_index: 43)
+        Arguments:
+          Var(name: 'x', tab_index: 40, type: integer)
+          Var(name: 'y', tab_index: 41, type: integer)
+      ProcCall(name: 'writeln', tab_index: 38)
+        Arguments:
+          String(value: "x=")
+          Var(name: 'x', tab_index: 40, type: integer)
+          String(value: " y=")
+          Var(name: 'y', tab_index: 41, type: integer)
+      ProcCall(name: 'add_one', tab_index: 47)
+        Arguments:
+          Var(name: 'x', tab_index: 40, type: integer)
+      ProcCall(name: 'writeln', tab_index: 38)
+        Arguments:
+          String(value: "x after add_one=")
+          Var(name: 'x', tab_index: 40, type: integer)
+      Assign
+        Target:
+          Var(name: 'hasil', tab_index: 42, type: integer)
+        Value:
+          Var(name: 'compute', tab_index: 49, type: integer)
+      ProcCall(name: 'writeln', tab_index: 38)
+        Arguments:
+          String(value: "hasil=")
+          Var(name: 'hasil', tab_index: 42, type: integer)
+          String(value: " x=")
+          Var(name: 'x', tab_index: 40, type: integer)
+----------------------------------------
+Semantic analysis completed!
+----------------------------------------

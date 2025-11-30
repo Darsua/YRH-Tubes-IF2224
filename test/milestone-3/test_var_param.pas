@@ -3,7 +3,6 @@ program TestVarParameter;
 konstanta
     MAX_SIZE = 100;
     PI = 314;
-    ADALAH_BENAR = true;
 
 variabel
     a, b: integer;
