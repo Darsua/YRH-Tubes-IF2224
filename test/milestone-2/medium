@@ -1,0 +1,780 @@
+Using DFA-based lexer
+DFA rules file: rules/pascal_lexicon.dfa
+Processing file: test/milestone-2/medium.pas
+----------------------------------------
+KEYWORD(program)
+IDENTIFIER(TestLexerIndonesiaLengkap)
+SEMICOLON(;)
+KEYWORD(konstanta)
+IDENTIFIER(MAX_SIZE)
+RELATIONAL_OPERATOR(=)
+NUMBER(100)
+SEMICOLON(;)
+IDENTIFIER(MIN_VALUE)
+RELATIONAL_OPERATOR(=)
+NUMBER(0)
+SEMICOLON(;)
+IDENTIFIER(PI)
+RELATIONAL_OPERATOR(=)
+NUMBER(3)
+DOT(.)
+NUMBER(14159)
+SEMICOLON(;)
+IDENTIFIER(NAMA_APP)
+RELATIONAL_OPERATOR(=)
+STRING_LITERAL(Aplikasi Test)
+SEMICOLON(;)
+KEYWORD(tipe)
+IDENTIFIER(NilaiUjian)
+RELATIONAL_OPERATOR(=)
+KEYWORD(larik)
+LBRACKET([)
+NUMBER(1)
+RANGE_OPERATOR(..)
+NUMBER(10)
+RBRACKET(])
+KEYWORD(dari)
+KEYWORD(integer)
+SEMICOLON(;)
+KEYWORD(variabel)
+IDENTIFIER(i)
+COMMA(,)
+IDENTIFIER(j)
+COMMA(,)
+IDENTIFIER(k)
+COLON(:)
+KEYWORD(integer)
+SEMICOLON(;)
+IDENTIFIER(hasil)
+COMMA(,)
+IDENTIFIER(total)
+COLON(:)
+KEYWORD(real)
+SEMICOLON(;)
+IDENTIFIER(selesai_flag)
+COLON(:)
+KEYWORD(boolean)
+SEMICOLON(;)
+IDENTIFIER(huruf)
+COLON(:)
+KEYWORD(char)
+SEMICOLON(;)
+IDENTIFIER(angka)
+COLON(:)
+IDENTIFIER(NilaiUjian)
+SEMICOLON(;)
+IDENTIFIER(mahasiswa)
+COLON(:)
+IDENTIFIER(DataMahasiswa)
+SEMICOLON(;)
+IDENTIFIER(status)
+COLON(:)
+IDENTIFIER(StatusSiswa)
+SEMICOLON(;)
+KEYWORD(fungsi)
+IDENTIFIER(tambah)
+LPARENTHESIS(()
+IDENTIFIER(a)
+COMMA(,)
+IDENTIFIER(b)
+COLON(:)
+KEYWORD(integer)
+RPARENTHESIS())
+COLON(:)
+KEYWORD(integer)
+SEMICOLON(;)
+KEYWORD(mulai)
+IDENTIFIER(tambah)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(a)
+ARITHMETIC_OPERATOR(+)
+IDENTIFIER(b)
+SEMICOLON(;)
+KEYWORD(selesai)
+SEMICOLON(;)
+KEYWORD(fungsi)
+IDENTIFIER(rata_rata)
+LPARENTHESIS(()
+IDENTIFIER(nilai)
+COLON(:)
+IDENTIFIER(NilaiUjian)
+SEMICOLON(;)
+IDENTIFIER(n)
+COLON(:)
+KEYWORD(integer)
+RPARENTHESIS())
+COLON(:)
+KEYWORD(real)
+SEMICOLON(;)
+KEYWORD(variabel)
+IDENTIFIER(idx)
+COLON(:)
+KEYWORD(integer)
+SEMICOLON(;)
+IDENTIFIER(jumlah)
+COLON(:)
+KEYWORD(real)
+SEMICOLON(;)
+KEYWORD(mulai)
+IDENTIFIER(jumlah)
+ASSIGN_OPERATOR(:=)
+NUMBER(0)
+SEMICOLON(;)
+KEYWORD(untuk)
+IDENTIFIER(idx)
+ASSIGN_OPERATOR(:=)
+NUMBER(1)
+KEYWORD(ke)
+IDENTIFIER(n)
+KEYWORD(lakukan)
+IDENTIFIER(jumlah)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(jumlah)
+ARITHMETIC_OPERATOR(+)
+IDENTIFIER(nilai)
+LBRACKET([)
+IDENTIFIER(idx)
+RBRACKET(])
+SEMICOLON(;)
+IDENTIFIER(rata_rata)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(jumlah)
+ARITHMETIC_OPERATOR(bagi)
+IDENTIFIER(n)
+SEMICOLON(;)
+KEYWORD(selesai)
+SEMICOLON(;)
+KEYWORD(prosedur)
+IDENTIFIER(cetak_info)
+LPARENTHESIS(()
+IDENTIFIER(npm)
+COLON(:)
+KEYWORD(integer)
+SEMICOLON(;)
+IDENTIFIER(nama)
+COLON(:)
+KEYWORD(char)
+RPARENTHESIS())
+SEMICOLON(;)
+KEYWORD(mulai)
+KEYWORD(selesai)
+SEMICOLON(;)
+KEYWORD(prosedur)
+IDENTIFIER(inisialisasi_array)
+SEMICOLON(;)
+KEYWORD(variabel)
+IDENTIFIER(idx)
+COLON(:)
+KEYWORD(integer)
+SEMICOLON(;)
+KEYWORD(mulai)
+KEYWORD(untuk)
+IDENTIFIER(idx)
+ASSIGN_OPERATOR(:=)
+NUMBER(1)
+KEYWORD(ke)
+NUMBER(10)
+KEYWORD(lakukan)
+IDENTIFIER(angka)
+LBRACKET([)
+IDENTIFIER(idx)
+RBRACKET(])
+ASSIGN_OPERATOR(:=)
+NUMBER(0)
+SEMICOLON(;)
+KEYWORD(selesai)
+SEMICOLON(;)
+KEYWORD(mulai)
+KEYWORD(jika)
+IDENTIFIER(i)
+RELATIONAL_OPERATOR(>)
+IDENTIFIER(j)
+KEYWORD(maka)
+KEYWORD(mulai)
+IDENTIFIER(i)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(i)
+ARITHMETIC_OPERATOR(+)
+NUMBER(1)
+SEMICOLON(;)
+IDENTIFIER(j)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(j)
+ARITHMETIC_OPERATOR(-)
+NUMBER(1)
+SEMICOLON(;)
+KEYWORD(selesai)
+KEYWORD(selain_itu)
+KEYWORD(mulai)
+IDENTIFIER(i)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(i)
+ARITHMETIC_OPERATOR(-)
+NUMBER(1)
+SEMICOLON(;)
+IDENTIFIER(j)
+ASSIGN_OPERATOR(:=)
+IDENTIFIER(j)
+ARITHMETIC_OPERATOR(+)
+NUMBER(1)
+SEMICOLON(;)
+KEYWORD(selesai)
+SEMICOLON(;)
+KEYWORD(selesai)
+DOT(.)
+----------------------------------------
+Tokenization completed successfully!
+Total tokens: 220
+----------------------------------------
+Starting syntax analysis...
+----------------------------------------
+----------------------------------------
+Parse Tree:
+----------------------------------------
+<program>
+├── <program-header>
+│   ├── KEYWORD(program)
+│   ├── IDENTIFIER(TestLexerIndonesiaLengkap)
+│   └── SEMICOLON(;)
+├── <declaration-part>
+│   ├── <const-declaration>
+│   │   ├── KEYWORD(konstanta)
+│   │   ├── IDENTIFIER(MAX_SIZE)
+│   │   ├── RELATIONAL_OPERATOR(=)
+│   │   ├── <constant-value>(100)
+│   │   ├── SEMICOLON(;)
+│   │   ├── IDENTIFIER(MIN_VALUE)
+│   │   ├── RELATIONAL_OPERATOR(=)
+│   │   ├── <constant-value>(0)
+│   │   ├── SEMICOLON(;)
+│   │   ├── IDENTIFIER(PI)
+│   │   ├── RELATIONAL_OPERATOR(=)
+│   │   ├── <constant-value>(3.14159)
+│   │   ├── SEMICOLON(;)
+│   │   ├── IDENTIFIER(NAMA_APP)
+│   │   ├── RELATIONAL_OPERATOR(=)
+│   │   ├── <constant-value>(Aplikasi Test)
+│   │   └── SEMICOLON(;)
+│   ├── <type-declaration>
+│   │   ├── KEYWORD(tipe)
+│   │   └── <type-definition>
+│   │       ├── IDENTIFIER(NilaiUjian)
+│   │       ├── RELATIONAL_OPERATOR(=)
+│   │       ├── <type>
+│   │       │   └── <array-type>
+│   │       │       ├── KEYWORD(larik)
+│   │       │       ├── LBRACKET([)
+│   │       │       ├── <range>
+│   │       │       │   ├── <expression>
+│   │       │       │   │   └── <simple-expression>
+│   │       │       │   │       └── <term>
+│   │       │       │   │           └── <factor>
+│   │       │       │   │               └── NUMBER(1)
+│   │       │       │   ├── RANGE_OPERATOR(..)
+│   │       │       │   └── <expression>
+│   │       │       │       └── <simple-expression>
+│   │       │       │           └── <term>
+│   │       │       │               └── <factor>
+│   │       │       │                   └── NUMBER(10)
+│   │       │       ├── RBRACKET(])
+│   │       │       ├── KEYWORD(dari)
+│   │       │       └── <type>
+│   │       │           └── KEYWORD(integer)
+│   │       └── SEMICOLON(;)
+│   ├── <var-declaration>
+│   │   ├── KEYWORD(variabel)
+│   │   ├── <identifier-list>
+│   │   │   ├── IDENTIFIER(i)
+│   │   │   ├── COMMA(,)
+│   │   │   ├── IDENTIFIER(j)
+│   │   │   ├── COMMA(,)
+│   │   │   └── IDENTIFIER(k)
+│   │   ├── COLON(:)
+│   │   ├── <type>
+│   │   │   └── KEYWORD(integer)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <identifier-list>
+│   │   │   ├── IDENTIFIER(hasil)
+│   │   │   ├── COMMA(,)
+│   │   │   └── IDENTIFIER(total)
+│   │   ├── COLON(:)
+│   │   ├── <type>
+│   │   │   └── KEYWORD(real)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <identifier-list>
+│   │   │   └── IDENTIFIER(selesai_flag)
+│   │   ├── COLON(:)
+│   │   ├── <type>
+│   │   │   └── KEYWORD(boolean)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <identifier-list>
+│   │   │   └── IDENTIFIER(huruf)
+│   │   ├── COLON(:)
+│   │   ├── <type>
+│   │   │   └── KEYWORD(char)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <identifier-list>
+│   │   │   └── IDENTIFIER(angka)
+│   │   ├── COLON(:)
+│   │   ├── <type>
+│   │   │   └── <custom-type>(NilaiUjian)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <identifier-list>
+│   │   │   └── IDENTIFIER(mahasiswa)
+│   │   ├── COLON(:)
+│   │   ├── <type>
+│   │   │   └── <custom-type>(DataMahasiswa)
+│   │   ├── SEMICOLON(;)
+│   │   ├── <identifier-list>
+│   │   │   └── IDENTIFIER(status)
+│   │   ├── COLON(:)
+│   │   ├── <type>
+│   │   │   └── <custom-type>(StatusSiswa)
+│   │   └── SEMICOLON(;)
+│   ├── <subprogram-declaration>
+│   │   └── <function-declaration>
+│   │       ├── KEYWORD(fungsi)
+│   │       ├── IDENTIFIER(tambah)
+│   │       ├── <formal-parameter-list>
+│   │       │   ├── LPARENTHESIS(()
+│   │       │   ├── <identifier-list>
+│   │       │   │   ├── IDENTIFIER(a)
+│   │       │   │   ├── COMMA(,)
+│   │       │   │   └── IDENTIFIER(b)
+│   │       │   ├── COLON(:)
+│   │       │   ├── <type>
+│   │       │   │   └── KEYWORD(integer)
+│   │       │   └── RPARENTHESIS())
+│   │       ├── COLON(:)
+│   │       ├── <type>
+│   │       │   └── KEYWORD(integer)
+│   │       ├── SEMICOLON(;)
+│   │       ├── <declaration-part>
+│   │       ├── <compound-statement>
+│   │       │   ├── KEYWORD(mulai)
+│   │       │   ├── <statement-list>
+│   │       │   │   ├── <assignment-statement>
+│   │       │   │   │   ├── IDENTIFIER(tambah)
+│   │       │   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │       │   │   │   └── <expression>
+│   │       │   │   │       └── <simple-expression>
+│   │       │   │   │           ├── <term>
+│   │       │   │   │           │   └── <factor>
+│   │       │   │   │           │       └── IDENTIFIER(a)
+│   │       │   │   │           ├── ARITHMETIC_OPERATOR(+)
+│   │       │   │   │           └── <term>
+│   │       │   │   │               └── <factor>
+│   │       │   │   │                   └── IDENTIFIER(b)
+│   │       │   │   └── SEMICOLON(;)
+│   │       │   └── KEYWORD(selesai)
+│   │       └── SEMICOLON(;)
+│   ├── <subprogram-declaration>
+│   │   └── <function-declaration>
+│   │       ├── KEYWORD(fungsi)
+│   │       ├── IDENTIFIER(rata_rata)
+│   │       ├── <formal-parameter-list>
+│   │       │   ├── LPARENTHESIS(()
+│   │       │   ├── <identifier-list>
+│   │       │   │   └── IDENTIFIER(nilai)
+│   │       │   ├── COLON(:)
+│   │       │   ├── <type>
+│   │       │   │   └── <custom-type>(NilaiUjian)
+│   │       │   ├── SEMICOLON(;)
+│   │       │   ├── <identifier-list>
+│   │       │   │   └── IDENTIFIER(n)
+│   │       │   ├── COLON(:)
+│   │       │   ├── <type>
+│   │       │   │   └── KEYWORD(integer)
+│   │       │   └── RPARENTHESIS())
+│   │       ├── COLON(:)
+│   │       ├── <type>
+│   │       │   └── KEYWORD(real)
+│   │       ├── SEMICOLON(;)
+│   │       ├── <declaration-part>
+│   │       │   └── <var-declaration>
+│   │       │       ├── KEYWORD(variabel)
+│   │       │       ├── <identifier-list>
+│   │       │       │   └── IDENTIFIER(idx)
+│   │       │       ├── COLON(:)
+│   │       │       ├── <type>
+│   │       │       │   └── KEYWORD(integer)
+│   │       │       ├── SEMICOLON(;)
+│   │       │       ├── <identifier-list>
+│   │       │       │   └── IDENTIFIER(jumlah)
+│   │       │       ├── COLON(:)
+│   │       │       ├── <type>
+│   │       │       │   └── KEYWORD(real)
+│   │       │       └── SEMICOLON(;)
+│   │       ├── <compound-statement>
+│   │       │   ├── KEYWORD(mulai)
+│   │       │   ├── <statement-list>
+│   │       │   │   ├── <assignment-statement>
+│   │       │   │   │   ├── IDENTIFIER(jumlah)
+│   │       │   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │       │   │   │   └── <expression>
+│   │       │   │   │       └── <simple-expression>
+│   │       │   │   │           └── <term>
+│   │       │   │   │               └── <factor>
+│   │       │   │   │                   └── NUMBER(0)
+│   │       │   │   ├── SEMICOLON(;)
+│   │       │   │   ├── <for-statement>
+│   │       │   │   │   ├── KEYWORD(untuk)
+│   │       │   │   │   ├── IDENTIFIER(idx)
+│   │       │   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │       │   │   │   ├── <expression>
+│   │       │   │   │   │   └── <simple-expression>
+│   │       │   │   │   │       └── <term>
+│   │       │   │   │   │           └── <factor>
+│   │       │   │   │   │               └── NUMBER(1)
+│   │       │   │   │   ├── KEYWORD(ke)
+│   │       │   │   │   ├── <expression>
+│   │       │   │   │   │   └── <simple-expression>
+│   │       │   │   │   │       └── <term>
+│   │       │   │   │   │           └── <factor>
+│   │       │   │   │   │               └── IDENTIFIER(n)
+│   │       │   │   │   ├── KEYWORD(lakukan)
+│   │       │   │   │   └── <statement>
+│   │       │   │   │       └── <assignment-statement>
+│   │       │   │   │           ├── IDENTIFIER(jumlah)
+│   │       │   │   │           ├── ASSIGN_OPERATOR(:=)
+│   │       │   │   │           └── <expression>
+│   │       │   │   │               └── <simple-expression>
+│   │       │   │   │                   ├── <term>
+│   │       │   │   │                   │   └── <factor>
+│   │       │   │   │                   │       └── IDENTIFIER(jumlah)
+│   │       │   │   │                   ├── ARITHMETIC_OPERATOR(+)
+│   │       │   │   │                   └── <term>
+│   │       │   │   │                       └── <factor>
+│   │       │   │   │                           ├── IDENTIFIER(nilai)
+│   │       │   │   │                           ├── LBRACKET([)
+│   │       │   │   │                           ├── <expression>
+│   │       │   │   │                           │   └── <simple-expression>
+│   │       │   │   │                           │       └── <term>
+│   │       │   │   │                           │           └── <factor>
+│   │       │   │   │                           │               └── IDENTIFIER(idx)
+│   │       │   │   │                           └── RBRACKET(])
+│   │       │   │   ├── SEMICOLON(;)
+│   │       │   │   ├── <assignment-statement>
+│   │       │   │   │   ├── IDENTIFIER(rata_rata)
+│   │       │   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │       │   │   │   └── <expression>
+│   │       │   │   │       └── <simple-expression>
+│   │       │   │   │           └── <term>
+│   │       │   │   │               ├── <factor>
+│   │       │   │   │               │   └── IDENTIFIER(jumlah)
+│   │       │   │   │               ├── ARITHMETIC_OPERATOR(bagi)
+│   │       │   │   │               └── <factor>
+│   │       │   │   │                   └── IDENTIFIER(n)
+│   │       │   │   └── SEMICOLON(;)
+│   │       │   └── KEYWORD(selesai)
+│   │       └── SEMICOLON(;)
+│   ├── <subprogram-declaration>
+│   │   └── <procedure-declaration>
+│   │       ├── KEYWORD(prosedur)
+│   │       ├── IDENTIFIER(cetak_info)
+│   │       ├── <formal-parameter-list>
+│   │       │   ├── LPARENTHESIS(()
+│   │       │   ├── <identifier-list>
+│   │       │   │   └── IDENTIFIER(npm)
+│   │       │   ├── COLON(:)
+│   │       │   ├── <type>
+│   │       │   │   └── KEYWORD(integer)
+│   │       │   ├── SEMICOLON(;)
+│   │       │   ├── <identifier-list>
+│   │       │   │   └── IDENTIFIER(nama)
+│   │       │   ├── COLON(:)
+│   │       │   ├── <type>
+│   │       │   │   └── KEYWORD(char)
+│   │       │   └── RPARENTHESIS())
+│   │       ├── SEMICOLON(;)
+│   │       ├── <declaration-part>
+│   │       ├── <compound-statement>
+│   │       │   ├── KEYWORD(mulai)
+│   │       │   ├── <statement-list>
+│   │       │   └── KEYWORD(selesai)
+│   │       └── SEMICOLON(;)
+│   └── <subprogram-declaration>
+│       └── <procedure-declaration>
+│           ├── KEYWORD(prosedur)
+│           ├── IDENTIFIER(inisialisasi_array)
+│           ├── SEMICOLON(;)
+│           ├── <declaration-part>
+│           │   └── <var-declaration>
+│           │       ├── KEYWORD(variabel)
+│           │       ├── <identifier-list>
+│           │       │   └── IDENTIFIER(idx)
+│           │       ├── COLON(:)
+│           │       ├── <type>
+│           │       │   └── KEYWORD(integer)
+│           │       └── SEMICOLON(;)
+│           ├── <compound-statement>
+│           │   ├── KEYWORD(mulai)
+│           │   ├── <statement-list>
+│           │   │   ├── <for-statement>
+│           │   │   │   ├── KEYWORD(untuk)
+│           │   │   │   ├── IDENTIFIER(idx)
+│           │   │   │   ├── ASSIGN_OPERATOR(:=)
+│           │   │   │   ├── <expression>
+│           │   │   │   │   └── <simple-expression>
+│           │   │   │   │       └── <term>
+│           │   │   │   │           └── <factor>
+│           │   │   │   │               └── NUMBER(1)
+│           │   │   │   ├── KEYWORD(ke)
+│           │   │   │   ├── <expression>
+│           │   │   │   │   └── <simple-expression>
+│           │   │   │   │       └── <term>
+│           │   │   │   │           └── <factor>
+│           │   │   │   │               └── NUMBER(10)
+│           │   │   │   ├── KEYWORD(lakukan)
+│           │   │   │   └── <statement>
+│           │   │   │       └── <assignment-statement>
+│           │   │   │           ├── IDENTIFIER(angka)
+│           │   │   │           ├── <array-index>
+│           │   │   │           │   └── <expression>
+│           │   │   │           │       └── <simple-expression>
+│           │   │   │           │           └── <term>
+│           │   │   │           │               └── <factor>
+│           │   │   │           │                   └── IDENTIFIER(idx)
+│           │   │   │           ├── ASSIGN_OPERATOR(:=)
+│           │   │   │           └── <expression>
+│           │   │   │               └── <simple-expression>
+│           │   │   │                   └── <term>
+│           │   │   │                       └── <factor>
+│           │   │   │                           └── NUMBER(0)
+│           │   │   └── SEMICOLON(;)
+│           │   └── KEYWORD(selesai)
+│           └── SEMICOLON(;)
+├── <compound-statement>
+│   ├── KEYWORD(mulai)
+│   ├── <statement-list>
+│   │   ├── <if-statement>
+│   │   │   ├── KEYWORD(jika)
+│   │   │   ├── <expression>
+│   │   │   │   ├── <simple-expression>
+│   │   │   │   │   └── <term>
+│   │   │   │   │       └── <factor>
+│   │   │   │   │           └── IDENTIFIER(i)
+│   │   │   │   ├── RELATIONAL_OPERATOR(>)
+│   │   │   │   └── <simple-expression>
+│   │   │   │       └── <term>
+│   │   │   │           └── <factor>
+│   │   │   │               └── IDENTIFIER(j)
+│   │   │   ├── KEYWORD(maka)
+│   │   │   ├── <compound-statement>
+│   │   │   │   ├── KEYWORD(mulai)
+│   │   │   │   ├── <statement-list>
+│   │   │   │   │   ├── <assignment-statement>
+│   │   │   │   │   │   ├── IDENTIFIER(i)
+│   │   │   │   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │   │   │   │   │   └── <expression>
+│   │   │   │   │   │       └── <simple-expression>
+│   │   │   │   │   │           ├── <term>
+│   │   │   │   │   │           │   └── <factor>
+│   │   │   │   │   │           │       └── IDENTIFIER(i)
+│   │   │   │   │   │           ├── ARITHMETIC_OPERATOR(+)
+│   │   │   │   │   │           └── <term>
+│   │   │   │   │   │               └── <factor>
+│   │   │   │   │   │                   └── NUMBER(1)
+│   │   │   │   │   ├── SEMICOLON(;)
+│   │   │   │   │   ├── <assignment-statement>
+│   │   │   │   │   │   ├── IDENTIFIER(j)
+│   │   │   │   │   │   ├── ASSIGN_OPERATOR(:=)
+│   │   │   │   │   │   └── <expression>
+│   │   │   │   │   │       └── <simple-expression>
+│   │   │   │   │   │           ├── <term>
+│   │   │   │   │   │           │   └── <factor>
+│   │   │   │   │   │           │       └── IDENTIFIER(j)
+│   │   │   │   │   │           ├── ARITHMETIC_OPERATOR(-)
+│   │   │   │   │   │           └── <term>
+│   │   │   │   │   │               └── <factor>
+│   │   │   │   │   │                   └── NUMBER(1)
+│   │   │   │   │   └── SEMICOLON(;)
+│   │   │   │   └── KEYWORD(selesai)
+│   │   │   ├── KEYWORD(selain_itu)
+│   │   │   └── <compound-statement>
+│   │   │       ├── KEYWORD(mulai)
+│   │   │       ├── <statement-list>
+│   │   │       │   ├── <assignment-statement>
+│   │   │       │   │   ├── IDENTIFIER(i)
+│   │   │       │   │   ├── ASSIGN_OPERATOR(:=)
+│   │   │       │   │   └── <expression>
+│   │   │       │   │       └── <simple-expression>
+│   │   │       │   │           ├── <term>
+│   │   │       │   │           │   └── <factor>
+│   │   │       │   │           │       └── IDENTIFIER(i)
+│   │   │       │   │           ├── ARITHMETIC_OPERATOR(-)
+│   │   │       │   │           └── <term>
+│   │   │       │   │               └── <factor>
+│   │   │       │   │                   └── NUMBER(1)
+│   │   │       │   ├── SEMICOLON(;)
+│   │   │       │   ├── <assignment-statement>
+│   │   │       │   │   ├── IDENTIFIER(j)
+│   │   │       │   │   ├── ASSIGN_OPERATOR(:=)
+│   │   │       │   │   └── <expression>
+│   │   │       │   │       └── <simple-expression>
+│   │   │       │   │           ├── <term>
+│   │   │       │   │           │   └── <factor>
+│   │   │       │   │           │       └── IDENTIFIER(j)
+│   │   │       │   │           ├── ARITHMETIC_OPERATOR(+)
+│   │   │       │   │           └── <term>
+│   │   │       │   │               └── <factor>
+│   │   │       │   │                   └── NUMBER(1)
+│   │   │       │   └── SEMICOLON(;)
+│   │   │       └── KEYWORD(selesai)
+│   │   └── SEMICOLON(;)
+│   └── KEYWORD(selesai)
+└── DOT(.)
+----------------------------------------
+Syntax analysis completed successfully!
+----------------------------------------
+Building AST...
+----------------------------------------
+AST built successfully!
+----------------------------------------
+Starting semantic analysis...
+----------------------------------------
+----------------------------------------
+SEMANTIC ERRORS:
+----------------------------------------
+Error: Variable 'jumlah' not declared
+Error: Variable 'jumlah' not declared
+----------------------------------------
+SYMBOL TABLE:
+----------------------------------------
+
+=== TAB (Identifier Table) ===
+  Idx     Identifier  Link         Obj      Type   Ref  Nrm  Lev   Adr
+--------------------------------------------------------------------------------
+    0            and     0    RESERVED     NOTYP     0    1    0     0
+    1          array     0    RESERVED     NOTYP     0    1    0     0
+    2          begin     1    RESERVED     NOTYP     0    1    0     0
+    3           case     2    RESERVED     NOTYP     0    1    0     0
+    4          const     3    RESERVED     NOTYP     0    1    0     0
+    5            div     4    RESERVED     NOTYP     0    1    0     0
+    6         downto     5    RESERVED     NOTYP     0    1    0     0
+    7             do     6    RESERVED     NOTYP     0    1    0     0
+    8           else     7    RESERVED     NOTYP     0    1    0     0
+    9            end     8    RESERVED     NOTYP     0    1    0     0
+   10            for     9    RESERVED     NOTYP     0    1    0     0
+   11       function    10    RESERVED     NOTYP     0    1    0     0
+   12             if    11    RESERVED     NOTYP     0    1    0     0
+   13            mod    12    RESERVED     NOTYP     0    1    0     0
+   14            not    13    RESERVED     NOTYP     0    1    0     0
+   15             of    14    RESERVED     NOTYP     0    1    0     0
+   16             or    15    RESERVED     NOTYP     0    1    0     0
+   17      procedure    16    RESERVED     NOTYP     0    1    0     0
+   18        program    17    RESERVED     NOTYP     0    1    0     0
+   19         record    18    RESERVED     NOTYP     0    1    0     0
+   20         repeat    19    RESERVED     NOTYP     0    1    0     0
+   21         string    20    RESERVED     NOTYP     0    1    0     0
+   22           then    21    RESERVED     NOTYP     0    1    0     0
+   23             to    22    RESERVED     NOTYP     0    1    0     0
+   24           type    23    RESERVED     NOTYP     0    1    0     0
+   25          until    24    RESERVED     NOTYP     0    1    0     0
+   26            var    25    RESERVED     NOTYP     0    1    0     0
+   27          while    26    RESERVED     NOTYP     0    1    0     0
+   28         packed    27    RESERVED     NOTYP     0    1    0     0
+   29        integer    28        TYPE       INT     0    1    0     1
+   30           real    29        TYPE      REAL     0    1    0     1
+   31        boolean    30        TYPE      BOOL     0    1    0     1
+   32           char    31        TYPE      CHAR     0    1    0     1
+   33           read    32        PROC     NOTYP     0    1    0     0
+   34         readln    33        PROC     NOTYP     0    1    0     1
+   35          write    34        PROC     NOTYP     0    1    0     2
+   36        writeln    35        PROC     NOTYP     0    1    0     3
+   37TestLexerIndonesiaLengkap     0    RESERVED     NOTYP     0    1    0     0
+   38              i     0         VAR       INT     0    1    0     0
+   39              j     0         VAR       INT     0    1    0     0
+   40              k     0         VAR       INT     0    1    0     0
+   41         tambah     0        FUNC       INT     0    1    0     0
+   42              a     0         VAR       INT     0    1    1     0
+   43              b     0         VAR       INT     0    1    1     0
+   44      rata_rata     0        FUNC      REAL     0    1    0     0
+   45          nilai     0         VAR     NOTYP     0    1    1     0
+   46              n     0         VAR       INT     0    1    1     0
+   47            idx     0         VAR       INT     0    1    1     0
+   48     cetak_info     0        PROC     NOTYP     0    1    0     0
+   49            npm     0         VAR       INT     0    1    1     0
+   50           nama     0         VAR      CHAR     0    1    1     0
+   51inisialisasi_array     0        PROC     NOTYP     0    1    0     0
+   52            idx     0         VAR       INT     0    1    1     0
+
+=== BTAB (Block Table) ===
+  Idx    Last    Lpar    Psze    Vsze
+----------------------------------------
+    0      51       0       0       3
+    1      43       0       0       0
+    2      47       0       0       0
+    3      50       0       0       0
+    4      52       0       0       0
+    5      52       0       0       0
+----------------------------------------
+DECORATED AST:
+----------------------------------------
+ProgramNode(name: 'TestLexerIndonesiaLengkap', tab_index: 37)
+  Declarations:
+    VarDecl(name: 'i', type: integer)
+    VarDecl(name: 'j', type: integer)
+    VarDecl(name: 'k', type: integer)
+    FunctionDecl(name: 'tambah', return_type: integer)
+      Parameters:
+        VarDecl(name: 'a', type: integer, parameter)
+        VarDecl(name: 'b', type: integer, parameter)
+      Body:
+        CompoundStatement
+          Assign
+            Target:
+              Var(name: 'tambah', tab_index: 0, type: integer)
+            Value:
+              Var(name: 'a', tab_index: 0, type: integer, level: 1)
+    FunctionDecl(name: 'rata_rata', return_type: real)
+      Parameters:
+        VarDecl(name: 'nilai', type: unknown, parameter)
+        VarDecl(name: 'n', type: integer, parameter)
+      Declarations:
+        VarDecl(name: 'idx', type: integer)
+      Body:
+        CompoundStatement
+          Assign
+            Target:
+              Var(name: 'jumlah')
+            Value:
+              Number(int: 0, type: integer)
+          For(variable: 'idx', direction: to)
+            Start:
+              Number(int: 1, type: integer)
+            End:
+              Var(name: 'n', tab_index: 0, type: integer, level: 1)
+          Assign
+            Target:
+              Var(name: 'rata_rata', tab_index: 0, type: real)
+            Value:
+              Var(name: 'jumlah')
+    ProcedureDecl(name: 'cetak_info')
+      Parameters:
+        VarDecl(name: 'npm', type: integer, parameter)
+        VarDecl(name: 'nama', type: char, parameter)
+      Body:
+        CompoundStatement
+    ProcedureDecl(name: 'inisialisasi_array')
+      Declarations:
+        VarDecl(name: 'idx', type: integer)
+      Body:
+        CompoundStatement
+          For(variable: 'idx', direction: to)
+            Start:
+              Number(int: 1, type: integer)
+            End:
+              Number(int: 10, type: integer)
+  Body:
+    CompoundStatement
+      If
+        Condition:
+          BinOp(op: '', type: integer)
+            Left:
+              Var(name: 'i', tab_index: 0, type: integer)
+            Right:
+              Var(name: 'j', tab_index: 0, type: integer)
+----------------------------------------
+Semantic analysis completed!
+----------------------------------------
