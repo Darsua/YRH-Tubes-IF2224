@@ -105,12 +105,8 @@ void VarDeclNode::accept(ASTVisitor* visitor) {
 void VarDeclNode::print(int indent) const {
     printIndent(indent);
     cout << "VarDecl(name: '" << name << "', type: " << dataTypeToString(varType);
-    if (symbolTableIndex >= 0) {
-        cout << ", tab_index: " << symbolTableIndex;
-    }
-    if (scopeLevel > 0) {
-        cout << ", level: " << scopeLevel;
-    }
+    cout << ", tab_index: " << symbolTableIndex;
+    cout << ", level: " << scopeLevel;
     if (isParameter) {
         cout << ", parameter";
         if (isVarParameter) {
