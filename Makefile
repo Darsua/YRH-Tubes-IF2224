@@ -4,23 +4,20 @@ CXXFLAGS = -Wall -Wextra
 SRCDIR = src
 BINDIR = bin
 
-# Core source files (exclude test files)
-CORE_SOURCES = $(SRCDIR)/dfa.cpp $(SRCDIR)/lexer.cpp $(SRCDIR)/parser.cpp \
-               $(SRCDIR)/token.cpp $(SRCDIR)/ast_nodes.cpp $(SRCDIR)/symbol_table.cpp \
-               $(SRCDIR)/ast_builder.cpp $(SRCDIR)/semantic_analyzer.cpp
+# Find all .cpp sources recursively under src/
+SRCS := $(shell find $(SRCDIR) -type f -name '*.cpp')
 
-# Main compiler
-MAIN_SOURCE = $(SRCDIR)/main.cpp
+# Include paths for headers
+INCLUDES = -I. -Isrc -Iinclude -Isrc/include
 
-# Targets
+# Target
 TARGET = $(BINDIR)/compiler
 
 all: $(TARGET)
 
 # Formatting
 CLANG_FORMAT = clang-format
-FORMAT_SRCS = $(wildcard src/*.cpp) $(wildcard src/*.h) \
-			  $(wildcard src/include/*.h) $(wildcard include/*.h) $(wildcard include/*.hpp)
+FORMAT_SRCS = $(shell find . -type f \( -name '*.cpp' -o -name '*.h' -o -name '*.hpp' \) -not -path './test/*')
 
 .PHONY: format
 format:
@@ -32,13 +29,13 @@ $(BINDIR):
 	mkdir -p $(BINDIR)
 
 # Main compiler
-$(TARGET): $(CORE_SOURCES) $(MAIN_SOURCE) | $(BINDIR)
-	$(CXX) $(CXXFLAGS) $(CORE_SOURCES) $(MAIN_SOURCE) -o $@
+$(TARGET): $(SRCS) | $(BINDIR)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRCS) -o $@
 
 clean:
 	rm -rf $(BINDIR)
 
 rebuild: clean all
 
-.PHONY: all clean rebuild
+.PHONY: all clean rebuild format
 
