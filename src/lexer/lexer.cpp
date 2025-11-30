@@ -518,7 +518,7 @@ vector<Token*> Lexer::lex(FILE* file) {
         token = readToken(file);
         if (token != nullptr) {
             tokens.push_back(token);
-            printf("%s\n", token->toString().c_str());
+            // printf("%s\n", token->toString().c_str());
         } else if (mode == SWITCH_MODE && !feof(file)) {
             // Only report error if we're not at EOF
             int c = getChar(file);
