@@ -1,5 +1,6 @@
 #include "include/semantic_analyzer.h"
 #include <iostream>
+#include <algorithm>
 
 using namespace std;
 
@@ -25,7 +26,7 @@ void SemanticAnalyzer::visitProgram(ProgramNode* node) {
     // Add program name to symbol table
     TabEntry progEntry;
     progEntry.identifier = node->getName();
-    progEntry.obj = static_cast<int>(ObjectClass::RESERVED);
+    progEntry.obj = static_cast<int>(ObjectClass::PROGRAM);
     progEntry.typ = 0;
     progEntry.ref = 0;
     progEntry.nrm = 1;
@@ -40,6 +41,9 @@ void SemanticAnalyzer::visitProgram(ProgramNode* node) {
     for (auto& decl : node->getDeclarations()) {
         decl->accept(this);
     }
+    
+    // Calculate addresses for global variables
+    calculateVariableAddresses(0);
     
     // Count variables in global scope
     int varCount = 0;
@@ -72,24 +76,59 @@ void SemanticAnalyzer::visitProgram(ProgramNode* node) {
 }
 
 void SemanticAnalyzer::visitVarDecl(VarDeclNode* node) {
+    // Check for redeclaration in current scope
+    TabEntry* existing = symbolTable.lookupSymbol(node->getName(), true);
+    if (existing && existing->lev == currentLevel) {
+        reportError("Variable '" + node->getName() + "' already declared in this scope", node->getLineNumber());
+        return;
+    }
+    
     // Add variable to symbol table
     TabEntry entry;
     entry.identifier = node->getName();
     entry.obj = static_cast<int>(ObjectClass::VARIABLE);
     
-    // Map DataType to TypeCode
-    DataType varType = node->getVarType();
-    if (varType == DataType::INTEGER) entry.typ = static_cast<int>(TypeCode::INTS);
-    else if (varType == DataType::REAL) entry.typ = static_cast<int>(TypeCode::REALS);
-    else if (varType == DataType::BOOLEAN) entry.typ = static_cast<int>(TypeCode::BOOLS);
-    else if (varType == DataType::CHAR) entry.typ = static_cast<int>(TypeCode::CHARS);
-    else entry.typ = static_cast<int>(TypeCode::NOTYP);
+    // Check if variable uses a custom type
+    string customType = node->getCustomTypeName();
+    if (!customType.empty()) {
+        // Lookup the custom type in symbol table
+        TabEntry* typeEntry = symbolTable.lookupSymbol(customType, false);
+        if (typeEntry && typeEntry->obj == static_cast<int>(ObjectClass::TYPE)) {
+            // Copy type and ref from the type definition
+            entry.typ = typeEntry->typ;
+            entry.ref = typeEntry->ref;
+        } else {
+            // Type not found, mark as unknown
+            entry.typ = static_cast<int>(TypeCode::NOTYP);
+            entry.ref = 0;
+            addError("Undefined type '" + customType + "'");
+        }
+    } else {
+        // Map DataType to TypeCode for primitive types
+        DataType varType = node->getVarType();
+        if (varType == DataType::INTEGER) entry.typ = static_cast<int>(TypeCode::INTS);
+        else if (varType == DataType::REAL) entry.typ = static_cast<int>(TypeCode::REALS);
+        else if (varType == DataType::BOOLEAN) entry.typ = static_cast<int>(TypeCode::BOOLS);
+        else if (varType == DataType::CHAR) entry.typ = static_cast<int>(TypeCode::CHARS);
+        else entry.typ = static_cast<int>(TypeCode::NOTYP);
+        
+        entry.ref = 0;
+    }
     
-    entry.ref = 0;
-    entry.nrm = 1;
+    // Set nrm based on parameter type
+    if (node->getIsParameter()) {
+        if (node->getIsVarParameter()) {
+            entry.nrm = 0;  // VAR parameter (by reference)
+        } else {
+            entry.nrm = 1;  // Normal parameter (by value)
+        }
+    } else {
+        entry.nrm = 1;  // Normal variable
+    }
+    
     entry.lev = currentLevel;
-    entry.adr = 0;
-    entry.link = 0;
+    entry.adr = 0;  // Will be calculated later
+    entry.link = 0;  // Will be set by addSymbol
     
     int idx = symbolTable.addSymbol(entry);
     if (idx < 0) {
@@ -126,7 +165,24 @@ void SemanticAnalyzer::visitConstDecl(ConstDeclNode* node) {
     entry.ref = 0;
     entry.nrm = 1;
     entry.lev = currentLevel;
-    entry.adr = 0;
+    
+    // Calculate constant value for adr field
+    int constantValue = 0;
+    if (node->getValue()) {
+        if (auto numNode = dynamic_pointer_cast<NumberNode>(node->getValue())) {
+            if (!numNode->getIsReal()) {
+                constantValue = numNode->getIntValue();
+            } else {
+                // For real constants, would need special handling
+                // For now, store as 0 (requires separate constant pool)
+                constantValue = 0;
+            }
+        } else if (auto charNode = dynamic_pointer_cast<CharNode>(node->getValue())) {
+            constantValue = static_cast<int>(charNode->getValue());
+        }
+        // String constants need pointer to string pool (not implemented yet)
+    }
+    entry.adr = constantValue;
     entry.link = 0;
     
     int idx = symbolTable.addSymbol(entry);
@@ -141,6 +197,18 @@ void SemanticAnalyzer::visitConstDecl(ConstDeclNode* node) {
 
 void SemanticAnalyzer::visitTypeDecl(TypeDeclNode* node) {
     if (!node) return;
+    
+    int atab_ref = 0;  // Will be set if this is an array type
+    
+    // Process the type definition first (to get ATAB index for arrays)
+    if (node->getTypeDefinition()) {
+        node->getTypeDefinition()->accept(this);
+        
+        // If it's an array type, get the ATAB index
+        if (auto arrayType = dynamic_pointer_cast<ArrayTypeNode>(node->getTypeDefinition())) {
+            atab_ref = arrayType->getArrayTableIndex();
+        }
+    }
     
     // Add type to symbol table
     TabEntry entry;
@@ -157,7 +225,7 @@ void SemanticAnalyzer::visitTypeDecl(TypeDeclNode* node) {
     else if (typeKind == DataType::RECORD) entry.typ = static_cast<int>(TypeCode::RECORDS);
     else entry.typ = static_cast<int>(TypeCode::NOTYP);
     
-    entry.ref = 0;
+    entry.ref = atab_ref;  // Point to ATAB for arrays
     entry.nrm = 1;
     entry.lev = currentLevel;
     entry.adr = 0;
@@ -171,11 +239,6 @@ void SemanticAnalyzer::visitTypeDecl(TypeDeclNode* node) {
         node->setSymbolTableIndex(idx);
         node->setScopeLevel(currentLevel);
     }
-    
-    // Process the type definition (array or record)
-    if (node->getTypeDefinition()) {
-        node->getTypeDefinition()->accept(this);
-    }
 }
 
 void SemanticAnalyzer::visitArrayType(ArrayTypeNode* node) {
@@ -183,20 +246,60 @@ void SemanticAnalyzer::visitArrayType(ArrayTypeNode* node) {
     
     // Add array type information to ATAB
     AtabEntry arrayEntry;
-    arrayEntry.xtyp = static_cast<int>(TypeCode::ARRAYS);
     
-    // Map element type
-    DataType elemType = node->getElementType();
-    if (elemType == DataType::INTEGER) arrayEntry.etyp = static_cast<int>(TypeCode::INTS);
-    else if (elemType == DataType::REAL) arrayEntry.etyp = static_cast<int>(TypeCode::REALS);
-    else if (elemType == DataType::BOOLEAN) arrayEntry.etyp = static_cast<int>(TypeCode::BOOLS);
-    else if (elemType == DataType::CHAR) arrayEntry.etyp = static_cast<int>(TypeCode::CHARS);
-    else arrayEntry.etyp = static_cast<int>(TypeCode::NOTYP);
+    // xtyp: Index type (usually integer for Pascal-S)
+    arrayEntry.xtyp = static_cast<int>(TypeCode::INTS);  // Index type is INTEGER
     
-    arrayEntry.eref = 0;
+    // Check if this is a multi-dimensional array
+    if (node->isMultiDimensional()) {
+        // Process nested array first (bottom-up approach)
+        auto nestedArray = node->getNestedElementType();
+        nestedArray->accept(this);
+        
+        // Get the ATAB index of the nested array
+        int nestedAtabIndex = nestedArray->getArrayTableIndex();
+        
+        // etyp: ARRAYS (5) for multi-dimensional arrays
+        arrayEntry.etyp = static_cast<int>(TypeCode::ARRAYS);
+        
+        // eref: points to the nested array's ATAB entry
+        arrayEntry.eref = nestedAtabIndex;
+        
+        // elsz: size of one element (the entire nested array)
+        arrayEntry.elsz = symbolTable.getArray(nestedAtabIndex)->size;
+    } else {
+        // Simple array: element is a primitive type
+        DataType elemType = node->getElementType();
+        int elementRef = 0;
+        int elementSize = 1;
+        
+        if (elemType == DataType::INTEGER) {
+            arrayEntry.etyp = static_cast<int>(TypeCode::INTS);
+            elementSize = 1;
+        }
+        else if (elemType == DataType::REAL) {
+            arrayEntry.etyp = static_cast<int>(TypeCode::REALS);
+            elementSize = 1;
+        }
+        else if (elemType == DataType::BOOLEAN) {
+            arrayEntry.etyp = static_cast<int>(TypeCode::BOOLS);
+            elementSize = 1;
+        }
+        else if (elemType == DataType::CHAR) {
+            arrayEntry.etyp = static_cast<int>(TypeCode::CHARS);
+            elementSize = 1;
+        }
+        else {
+            arrayEntry.etyp = static_cast<int>(TypeCode::NOTYP);
+            elementSize = 1;
+        }
+        
+        arrayEntry.eref = elementRef;
+        arrayEntry.elsz = elementSize;
+    }
+    
     arrayEntry.low = node->getLowBound();
     arrayEntry.high = node->getHighBound();
-    arrayEntry.elsz = 1;  // Simplified - would need proper size calculation
     arrayEntry.size = (node->getHighBound() - node->getLowBound() + 1) * arrayEntry.elsz;
     
     int atab_idx = symbolTable.addArray(arrayEntry);
@@ -221,30 +324,35 @@ void SemanticAnalyzer::visitRecordType(RecordTypeNode* node) {
 void SemanticAnalyzer::visitProcedureDecl(ProcedureDeclNode* node) {
     if (!node) return;
     
+    // Enter procedure scope first to get BTAB index
+    int savedLevel = currentLevel;
+    symbolTable.enterScope(0, 0);
+    currentLevel++;
+    int procBlockIdx = symbolTable.getCurrentBlock();
+    
     // Add procedure to symbol table
     TabEntry entry;
     entry.identifier = node->getName();
     entry.obj = static_cast<int>(ObjectClass::PROCEDURE);
     entry.typ = static_cast<int>(TypeCode::NOTYP);
-    entry.ref = 0;
+    entry.ref = procBlockIdx;  // Point to BTAB index
     entry.nrm = 1;
-    entry.lev = currentLevel;
-    entry.adr = 0;
+    entry.lev = savedLevel;  // Use saved level (declared at parent level)
+    entry.adr = procBlockIdx;  // Address points to BTAB index
     entry.link = 0;
     
+    // Add to parent scope, not current scope
+    currentLevel = savedLevel;
     int idx = symbolTable.addSymbol(entry);
+    currentLevel = savedLevel + 1;
+    
     if (idx < 0) {
         addError("Procedure '" + node->getName() + "' already declared");
     } else {
         // Decorate the AST node with symbol table information
         node->setSymbolTableIndex(idx);
-        node->setScopeLevel(currentLevel);
+        node->setScopeLevel(savedLevel);
     }
-    
-    // Enter procedure scope
-    int savedLevel = currentLevel;
-    symbolTable.enterScope(0, 0);
-    currentLevel++;
     
     // Add parameters to symbol table
     for (auto& param : node->getParameters()) {
@@ -255,6 +363,10 @@ void SemanticAnalyzer::visitProcedureDecl(ProcedureDeclNode* node) {
     for (auto& decl : node->getDeclarations()) {
         if (decl) decl->accept(this);
     }
+    
+    // Calculate addresses for parameters and local variables
+    calculateParameterAddresses(procBlockIdx, node->getParameters().size());
+    calculateVariableAddresses(procBlockIdx);
     
     // Process body
     if (node->getCompoundStatement()) {
@@ -269,6 +381,12 @@ void SemanticAnalyzer::visitProcedureDecl(ProcedureDeclNode* node) {
 void SemanticAnalyzer::visitFunctionDecl(FunctionDeclNode* node) {
     if (!node) return;
     
+    // Enter function scope first to get BTAB index
+    int savedLevel = currentLevel;
+    symbolTable.enterScope(0, 0);
+    currentLevel++;
+    int funcBlockIdx = symbolTable.getCurrentBlock();
+    
     // Add function to symbol table
     TabEntry entry;
     entry.identifier = node->getName();
@@ -282,26 +400,25 @@ void SemanticAnalyzer::visitFunctionDecl(FunctionDeclNode* node) {
     else if (retType == DataType::CHAR) entry.typ = static_cast<int>(TypeCode::CHARS);
     else entry.typ = static_cast<int>(TypeCode::NOTYP);
     
-    entry.ref = 0;
+    entry.ref = funcBlockIdx;  // Point to BTAB index
     entry.nrm = 1;
-    entry.lev = currentLevel;
-    entry.adr = 0;
+    entry.lev = savedLevel;  // Use saved level (declared at parent level)
+    entry.adr = funcBlockIdx;  // Address points to BTAB index
     entry.link = 0;
     
+    // Add to parent scope, not current scope
+    currentLevel = savedLevel;
     int idx = symbolTable.addSymbol(entry);
+    currentLevel = savedLevel + 1;
+    
     if (idx < 0) {
         addError("Function '" + node->getName() + "' already declared");
     } else {
         // Decorate the AST node with symbol table information
         node->setSymbolTableIndex(idx);
-        node->setScopeLevel(currentLevel);
+        node->setScopeLevel(savedLevel);
         node->setDataType(retType);
     }
-    
-    // Enter function scope
-    int savedLevel = currentLevel;
-    symbolTable.enterScope(0, 0);
-    currentLevel++;
     
     // Add parameters to symbol table
     for (auto& param : node->getParameters()) {
@@ -312,6 +429,10 @@ void SemanticAnalyzer::visitFunctionDecl(FunctionDeclNode* node) {
     for (auto& decl : node->getDeclarations()) {
         if (decl) decl->accept(this);
     }
+    
+    // Calculate addresses for parameters and local variables
+    calculateParameterAddresses(funcBlockIdx, node->getParameters().size());
+    calculateVariableAddresses(funcBlockIdx);
     
     // Process body
     if (node->getCompoundStatement()) {
@@ -406,14 +527,48 @@ void SemanticAnalyzer::visitBinOp(BinOpNode* node) {
     
     auto leftType = node->getLeft() ? node->getLeft()->getDataType() : DataType::UNKNOWN;
     auto rightType = node->getRight() ? node->getRight()->getDataType() : DataType::UNKNOWN;
+    string op = node->getOp();
     
-    // Infer result type
-    if (leftType == DataType::REAL || rightType == DataType::REAL) {
-        node->setDataType(DataType::REAL);
-    } else if (leftType == DataType::INTEGER || rightType == DataType::INTEGER) {
-        node->setDataType(DataType::INTEGER);
-    } else {
-        node->setDataType(leftType);
+    // Type checking for binary operations
+    // Arithmetic operators require numeric types
+    if (op == "+" || op == "-" || op == "*" || op == "bagi" || op == "div" || op == "mod") {
+        if (leftType != DataType::INTEGER && leftType != DataType::REAL && leftType != DataType::UNKNOWN) {
+            reportError("Arithmetic operator '" + op + "' requires numeric left operand");
+        }
+        if (rightType != DataType::INTEGER && rightType != DataType::REAL && rightType != DataType::UNKNOWN) {
+            reportError("Arithmetic operator '" + op + "' requires numeric right operand");
+        }
+        // Infer result type
+        if (leftType == DataType::REAL || rightType == DataType::REAL) {
+            node->setDataType(DataType::REAL);
+        } else {
+            node->setDataType(DataType::INTEGER);
+        }
+    }
+    // Relational operators
+    else if (op == "<" || op == ">" || op == "<=" || op == ">=" || op == "=" || op == "<>") {
+        // Operands should be compatible
+        node->setDataType(DataType::BOOLEAN);
+    }
+    // Logical operators
+    else if (op == "dan" || op == "atau") {
+        if (leftType != DataType::BOOLEAN && leftType != DataType::UNKNOWN) {
+            reportError("Logical operator '" + op + "' requires boolean left operand");
+        }
+        if (rightType != DataType::BOOLEAN && rightType != DataType::UNKNOWN) {
+            reportError("Logical operator '" + op + "' requires boolean right operand");
+        }
+        node->setDataType(DataType::BOOLEAN);
+    }
+    else {
+        // Default fallback
+        if (leftType == DataType::REAL || rightType == DataType::REAL) {
+            node->setDataType(DataType::REAL);
+        } else if (leftType == DataType::INTEGER || rightType == DataType::INTEGER) {
+            node->setDataType(DataType::INTEGER);
+        } else {
+            node->setDataType(leftType);
+        }
     }
 }
 
@@ -519,4 +674,133 @@ void SemanticAnalyzer::visitRecordAccess(RecordAccessNode* node) {
     
     // For now, set field type to INTEGER (would need proper field lookup)
     node->setDataType(DataType::INTEGER);
+}
+
+// ==================== ADDRESS CALCULATION HELPERS ====================
+
+void SemanticAnalyzer::calculateParameterAddresses(int blockIdx, size_t paramCount) {
+    if (blockIdx < 0 || blockIdx >= symbolTable.getBtabSize()) return;
+    
+    BtabEntry* block = symbolTable.getBlock(blockIdx);
+    if (!block) return;
+    
+    // Collect parameter symbols (they are the first N symbols in the block)
+    vector<int> paramIndices;
+    int idx = block->last;
+    
+    // Traverse backward to find all symbols
+    while (idx > 0 && paramIndices.size() < paramCount * 10) {  // Safety limit
+        TabEntry* entry = symbolTable.getSymbol(idx);
+        if (!entry) break;
+        
+        if (entry->obj == static_cast<int>(ObjectClass::VARIABLE) && 
+            entry->lev == currentLevel) {
+            paramIndices.push_back(idx);
+        }
+        
+        if (idx == entry->link) break;  // Prevent infinite loop
+        idx = entry->link;
+    }
+    
+    // Reverse to get declaration order
+    reverse(paramIndices.begin(), paramIndices.end());
+    
+    // Calculate parameter addresses (first paramCount symbols are parameters)
+    int paramOffset = 0;
+    int paramSize = 0;
+    int lastParamIndex = 0;
+    for (size_t i = 0; i < paramCount && i < paramIndices.size(); i++) {
+        TabEntry* entry = symbolTable.getSymbol(paramIndices[i]);
+        if (!entry) continue;
+        
+        int size = 1;  // Default parameter size
+        
+        // Arrays passed by reference use 1 word (pointer)
+        if (entry->typ == static_cast<int>(TypeCode::ARRAYS)) {
+            size = 1;
+        }
+        
+        entry->adr = paramOffset;
+        symbolTable.updateSymbol(paramIndices[i], *entry);
+        
+        paramOffset += size;
+        paramSize += size;
+        
+        // Track the last parameter index
+        lastParamIndex = paramIndices[i];
+    }
+    
+    // Update block parameter size and lpar
+    block->psze = paramSize;
+    block->lpar = (paramCount > 0) ? lastParamIndex : 0;
+    symbolTable.updateBlock(blockIdx, *block);
+}
+
+void SemanticAnalyzer::calculateVariableAddresses(int blockIdx) {
+    if (blockIdx < 0 || blockIdx >= symbolTable.getBtabSize()) return;
+    
+    BtabEntry* block = symbolTable.getBlock(blockIdx);
+    if (!block) return;
+    
+    // Collect all variable symbols in this block
+    vector<int> varIndices;
+    int idx = block->last;
+    int expectedLevel = (blockIdx == 0) ? 0 : currentLevel;
+    
+    while (idx > 0) {
+        TabEntry* entry = symbolTable.getSymbol(idx);
+        if (!entry) break;
+        
+        if (entry->lev != expectedLevel) break;  // Different level
+        
+        // Only process non-parameter variables
+        if (entry->obj == static_cast<int>(ObjectClass::VARIABLE)) {
+            varIndices.push_back(idx);
+        }
+        
+        if (idx == entry->link) break;  // Prevent infinite loop
+        idx = entry->link;
+    }
+    
+    // Reverse to get declaration order
+    reverse(varIndices.begin(), varIndices.end());
+    
+    // Skip parameters (they already have addresses set)
+    // Parameters have lower indices (added first)
+    int varOffset = 0;
+    int varSize = 0;
+    
+    for (int varIdx : varIndices) {
+        TabEntry* entry = symbolTable.getSymbol(varIdx);
+        if (!entry) continue;
+        
+        // Skip if address already set (it's a parameter)
+        if (entry->adr > 0 || (varOffset == 0 && entry->adr == 0)) {
+            // For parameters, skip if part of block->psze
+            if (block->psze > 0 && varSize < static_cast<size_t>(block->psze)) {
+                varSize++;
+                continue;
+            }
+        }
+        
+        int size = 1;  // Default variable size
+        
+        // Calculate size for arrays
+        if (entry->typ == static_cast<int>(TypeCode::ARRAYS)) {
+            AtabEntry* arrayInfo = symbolTable.getArray(entry->ref);
+            if (arrayInfo) {
+                size = arrayInfo->size;
+            }
+        }
+        
+        entry->adr = varOffset;
+        symbolTable.updateSymbol(varIdx, *entry);
+        
+        varOffset += size;
+        varSize += size;
+    }
+    
+    // Update block variable size
+    block->vsze = varOffset;
+    symbolTable.updateBlock(blockIdx, *block);
 }

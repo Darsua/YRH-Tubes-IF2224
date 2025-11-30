@@ -94,7 +94,7 @@ void ProgramNode::print(int indent) const {
 // ==================== VARIABLE DECLARATION NODE ====================
 
 VarDeclNode::VarDeclNode(const string& varName, DataType type) 
-    : name(varName), varType(type), isParameter(false), isVarParameter(false) {
+    : name(varName), varType(type), customTypeName(""), isParameter(false), isVarParameter(false) {
     dataType = type;
 }
 
@@ -173,7 +173,12 @@ void TypeDeclNode::print(int indent) const {
 // ==================== ARRAY TYPE NODE ====================
 
 ArrayTypeNode::ArrayTypeNode(int low, int high, DataType elemType) 
-    : lowBound(low), highBound(high), elementType(elemType), arrayTableIndex(-1) {
+    : lowBound(low), highBound(high), elementType(elemType), nestedElementType(nullptr), arrayTableIndex(-1) {
+    dataType = DataType::ARRAY;
+}
+
+ArrayTypeNode::ArrayTypeNode(int low, int high, shared_ptr<ArrayTypeNode> nestedElemType) 
+    : lowBound(low), highBound(high), elementType(DataType::ARRAY), nestedElementType(nestedElemType), arrayTableIndex(-1) {
     dataType = DataType::ARRAY;
 }
 
@@ -183,12 +188,22 @@ void ArrayTypeNode::accept(ASTVisitor* visitor) {
 
 void ArrayTypeNode::print(int indent) const {
     printIndent(indent);
-    cout << "ArrayType(range: [" << lowBound << ".." << highBound 
-         << "], element_type: " << dataTypeToString(elementType);
-    if (arrayTableIndex >= 0) {
-        cout << ", atab_index: " << arrayTableIndex;
+    if (nestedElementType) {
+        cout << "ArrayType(range: [" << lowBound << ".." << highBound 
+             << "], element_type: ARRAY";
+        if (arrayTableIndex >= 0) {
+            cout << ", atab_index: " << arrayTableIndex;
+        }
+        cout << ")" << endl;
+        nestedElementType->print(indent + 1);
+    } else {
+        cout << "ArrayType(range: [" << lowBound << ".." << highBound 
+             << "], element_type: " << dataTypeToString(elementType);
+        if (arrayTableIndex >= 0) {
+            cout << ", atab_index: " << arrayTableIndex;
+        }
+        cout << ")" << endl;
     }
-    cout << ")" << endl;
 }
 
 // ==================== RECORD TYPE NODE ====================
