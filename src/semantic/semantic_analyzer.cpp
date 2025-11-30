@@ -724,10 +724,18 @@ void SemanticAnalyzer::calculateParameterAddresses(int blockIdx, size_t paramCou
     vector<int> paramIndices;
     int idx = block->last;
 
-    // Traverse backward to find all symbols
+    // Traverse backward to find all symbols in this block only
     while (idx > 0 && paramIndices.size() < paramCount * 10) {  // Safety limit
         TabEntry* entry = symbolTable.getSymbol(idx);
         if (!entry) break;
+
+        // Stop if we hit a procedure/function/program boundary (except the first one)
+        if (idx != block->last && 
+            (entry->obj == static_cast<int>(ObjectClass::PROCEDURE) ||
+             entry->obj == static_cast<int>(ObjectClass::FUNCTION) ||
+             entry->obj == static_cast<int>(ObjectClass::PROGRAM))) {
+            break;
+        }
 
         if (entry->obj == static_cast<int>(ObjectClass::VARIABLE) && entry->lev == currentLevel) {
             paramIndices.push_back(idx);

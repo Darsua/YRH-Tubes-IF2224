@@ -703,8 +703,8 @@ shared_ptr<ParseNode> Parser::parseFunctionDeclaration() {
     return node;
 }
 
-// Grammar: <formal-parameter-list> -> LPARENTHESIS + (<identifier-list> + COLON + <type> +
-// (SEMICOLON + <identifier-list> + COLON + <type>)*)? + RPARENTHESIS
+// Grammar: <formal-parameter-list> -> LPARENTHESIS + ((KEYWORD(variabel))? + <identifier-list> + COLON + <type> +
+// (SEMICOLON + (KEYWORD(variabel))? + <identifier-list> + COLON + <type>)*)? + RPARENTHESIS
 shared_ptr<ParseNode> Parser::parseFormalParameterList() {
     auto node = make_shared<ParseNode>("formal-parameter-list");
 
@@ -715,6 +715,13 @@ shared_ptr<ParseNode> Parser::parseFormalParameterList() {
 
     if (!match(RPARENTHESIS)) {
         do {
+            if (matchKeyword("variabel")) {
+                Token* varToken = currentToken();
+                auto varNode = make_shared<ParseNode>("KEYWORD", varToken->getValue());
+                node->addChild(varNode);
+                advance();
+            }
+
             auto idList = parseIdentifierList();
             node->addChild(idList);
 

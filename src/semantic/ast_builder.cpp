@@ -617,7 +617,7 @@ vector<shared_ptr<VarDeclNode>> ASTBuilder::convertFormalParameterList(shared_pt
     for (const auto& child : children) {
         if (!child) continue;
 
-        if (child->getType() == "KEYWORD" && child->getValue() == "var") {
+        if (child->getType() == "KEYWORD" && child->getValue() == "variabel") {
             isVarParam = true;
         } else if (child->getType() == "identifier-list") {
             // Extract identifiers from identifier-list node
