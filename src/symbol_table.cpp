@@ -5,7 +5,6 @@
 
 using namespace std;
 
-// Reserved words dalam bahasa Indonesia (29 reserved words)
 const vector<string> SymbolTable::RESERVED_WORDS = {
     "dan", "larik", "mulai", "case", "konstanta", "bagi", "turun_ke", "lakukan",
     "selain_itu", "selesai", "untuk", "fungsi", "jika", "mod", "tidak", "dari", "atau",
@@ -13,49 +12,36 @@ const vector<string> SymbolTable::RESERVED_WORDS = {
     "tipe", "sampai", "variabel", "selama", "packed"
 };
 
-// ==================== CONSTRUCTOR ====================
-
 SymbolTable::SymbolTable() : level(0) {
-    // Reserve space untuk efisiensi
     tab.reserve(1000);
     btab.reserve(100);
     atab.reserve(100);
-    
-    // Initialize reserved words (index 0-28)
+
     initializeReservedWords();
+    initializeStandardIdentifiers();
     
-    // Create global block (btab[0])
     BtabEntry globalBlock;
-    globalBlock.last = 28;  // Last reserved word
+    globalBlock.last = tab.size() - 1; 
     globalBlock.lpar = 0;
     globalBlock.psze = 0;
     globalBlock.vsze = 0;
     btab.push_back(globalBlock);
     
-    // Push global block ke display
     display.push(0);
-    
-    // Note: Standard identifiers (integer, real, boolean, char, true, false)
-    // and built-in procedures (read, readln, write, writeln) are handled
-    // separately and not added to TAB to keep user identifiers starting at 29
 }
-
-// ==================== SCOPE MANAGEMENT ====================
 
 int SymbolTable::enterScope(int psize, int vsize) {
     level++;
     
-    // Create new block
     BtabEntry newBlock;
-    newBlock.last = tab.size() - 1;  // Will be updated as symbols are added
-    newBlock.lpar = 0;  // Will be set if this is a procedure/function
+    newBlock.last = tab.size() - 1; 
+    newBlock.lpar = 0;
     newBlock.psze = psize;
     newBlock.vsze = vsize;
     
     int blockIndex = btab.size();
     btab.push_back(newBlock);
     
-    // Push to display stack
     display.push(blockIndex);
     
     return blockIndex;
@@ -75,7 +61,9 @@ int SymbolTable::getCurrentBlock() const {
     return 0;
 }
 
-// ==================== SYMBOL OPERATIONS (TAB) ====================
+int SymbolTable::getCurrentLevel() const {
+    return level;
+}
 
 int SymbolTable::addSymbol(const TabEntry& entry) {
     int index = tab.size();
@@ -112,21 +100,23 @@ TabEntry* SymbolTable::lookupSymbol(const string& name, bool currentScopeOnly) {
     const vector<int>& indices = it->second;
     
     if (currentScopeOnly) {
-        // Search only in current block
+        // Search only in current block at current level
         int currentBlock = getCurrentBlock();
         if (currentBlock < 0 || currentBlock >= (int)btab.size()) {
             return nullptr;
         }
         
         int lastInBlock = btab[currentBlock].last;
+        int currentLevel = level;
         
         // Traverse linked list of identifiers in this block
         for (int i = lastInBlock; i >= 0; i = tab[i].link) {
-            if (tab[i].identifier == name) {
+            // Only consider symbols at the current level
+            if (tab[i].lev == currentLevel && tab[i].identifier == name) {
                 return &tab[i];
             }
-            // Stop if we've gone too far back
-            if (i == 0 || (currentBlock > 0 && i < btab[currentBlock - 1].last)) {
+            // Stop when we reach symbols from a different (parent) level
+            if (tab[i].lev < currentLevel) {
                 break;
             }
         }
@@ -165,6 +155,10 @@ void SymbolTable::updateSymbol(int index, const TabEntry& entry) {
     }
 }
 
+int SymbolTable::getTabSize() const {
+    return tab.size();
+}
+
 // ==================== BLOCK OPERATIONS (BTAB) ====================
 
 int SymbolTable::addBlock(const BtabEntry& entry) {
@@ -193,6 +187,10 @@ void SymbolTable::updateBlock(int index, const BtabEntry& entry) {
     }
 }
 
+int SymbolTable::getBtabSize() const {
+    return btab.size();
+}
+
 // ==================== ARRAY OPERATIONS (ATAB) ====================
 
 int SymbolTable::addArray(const AtabEntry& entry) {
@@ -213,6 +211,10 @@ const AtabEntry* SymbolTable::getArray(int index) const {
         return &atab[index];
     }
     return nullptr;
+}
+
+int SymbolTable::getAtabSize() const {
+    return atab.size();
 }
 
 // ==================== INITIALIZATION ====================
@@ -314,7 +316,7 @@ void SymbolTable::initializeStandardIdentifiers() {
     // read procedure
     TabEntry readProc;
     readProc.identifier = "read";
-    readProc.link = charIdx;
+    readProc.link = falseIdx;
     readProc.obj = static_cast<int>(ObjectClass::PROCEDURE);
     readProc.typ = static_cast<int>(TypeCode::NOTYP);
     readProc.ref = 0;  // No block (built-in)

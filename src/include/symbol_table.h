@@ -10,30 +10,27 @@
 using namespace std;
 
 enum class ObjectClass {
-    CONSTANT = 0,    // Konstanta
-    VARIABLE = 1,    // Variabel
-    TYPE = 2,        // Type definition
-    PROCEDURE = 3,   // Prosedur
-    FUNCTION = 4,    // Fungsi
-    RESERVED = 5,    // Reserved word
-    PROGRAM = 6      // Program name
+    CONSTANT = 0,
+    VARIABLE = 1, 
+    TYPE = 2,  
+    PROCEDURE = 3,
+    FUNCTION = 4,
+    RESERVED = 5,
+    PROGRAM = 6
 };
 
-// Type codes untuk tab.typ
 enum class TypeCode {
-    NOTYP = 0,      // No type
-    INTS = 1,       // Integer
-    REALS = 2,      // Real
-    BOOLS = 3,      // Boolean
-    CHARS = 4,      // Char
-    ARRAYS = 5,     // Array
-    RECORDS = 6     // Record
+    NOTYP = 0,      
+    INTS = 1,        
+    REALS = 2,      
+    BOOLS = 3,      
+    CHARS = 4,      
+    ARRAYS = 5,
+    RECORDS = 6
 };
 
-// Tab entry - identifier table
-// Sesuai spesifikasi: identifiers, link, obj, type, ref, nrm, lev, adr
 struct TabEntry {
-    string identifier;      // Nama identifier
+    string identifier;     // Nama identifier
     int link;              // Link ke identifier sebelumnya di block yang sama
     int obj;               // Object class (constant, variable, type, procedure, function)
     int typ;               // Type code
@@ -45,8 +42,6 @@ struct TabEntry {
     TabEntry() : identifier(""), link(0), obj(0), typ(0), ref(0), nrm(1), lev(0), adr(0) {}
 };
 
-// Btab entry - block table
-// Sesuai spesifikasi: last, lpar, psze, vsze
 struct BtabEntry {
     int last;   // Index tab terakhir di block ini
     int lpar;   // Index parameter terakhir (0 jika tidak ada parameter)
@@ -57,8 +52,6 @@ struct BtabEntry {
     BtabEntry(int l, int lp, int ps, int vs) : last(l), lpar(lp), psze(ps), vsze(vs) {}
 };
 
-// Atab entry - array table
-// Sesuai spesifikasi: xtyp, etyp, eref, low, high, elsz, size
 struct AtabEntry {
     int xtyp;   // Index type (tipe untuk indeks array)
     int etyp;   // Element type (tipe elemen array)
@@ -73,58 +66,30 @@ struct AtabEntry {
         : xtyp(x), etyp(e), eref(er), low(l), high(h), elsz(es), size(s) {}
 };
 
-/**
- * Symbol Table Class
- * Manages three tables: tab (identifiers), btab (blocks), atab (arrays)
- * Uses stack-based scope management with display register
- */
 class SymbolTable {
 private:
-    vector<TabEntry> tab;       // Identifier table
-    vector<BtabEntry> btab;     // Block table
-    vector<AtabEntry> atab;     // Array table
+    vector<TabEntry> tab;       
+    vector<BtabEntry> btab;     
+    vector<AtabEntry> atab;    
     
-    stack<int> display;         // Display register - stack of block indices
-    int level;                  // Current lexical level
+    stack<int> display;         
+    int level;
     
-    // Helper untuk quick lookup by name (optional optimization)
+    // Helper untuk quick lookup by name
     unordered_map<string, vector<int>> nameIndex;
     
-    // Reserved words yang sudah ter-install di tab[0..28]
+    // Reserved words
     static const vector<string> RESERVED_WORDS;
 
 public:
-    /**
-     * Constructor - Initialize symbol table
-     * Reserved words akan diisi di index 0-28
-     * Global block (btab[0]) akan dibuat
-     */
     SymbolTable();
-    
+
     // ==================== SCOPE MANAGEMENT ====================
-    
-    /**
-     * Enter new scope (create new block)
-     * @param psize Parameter size
-     * @param vsize Variable size
-     * @return Index of new block in btab
-     */
+
     int enterScope(int psize = 0, int vsize = 0);
-    
-    /**
-     * Exit current scope
-     */
     void exitScope();
-    
-    /**
-     * Get current block index
-     */
     int getCurrentBlock() const;
-    
-    /**
-     * Get current lexical level
-     */
-    int getCurrentLevel() const { return level; }
+    int getCurrentLevel() const;
     
     // ==================== SYMBOL OPERATIONS (TAB) ====================
     
@@ -166,7 +131,7 @@ public:
     /**
      * Get tab size
      */
-    int getTabSize() const { return tab.size(); }
+    int getTabSize() const;
     
     // ==================== BLOCK OPERATIONS (BTAB) ====================
     
@@ -199,7 +164,7 @@ public:
     /**
      * Get btab size
      */
-    int getBtabSize() const { return btab.size(); }
+    int getBtabSize() const;
     
     // ==================== ARRAY OPERATIONS (ATAB) ====================
     
@@ -225,23 +190,17 @@ public:
     /**
      * Get atab size
      */
-    int getAtabSize() const { return atab.size(); }
+    int getAtabSize() const;
     
     // ==================== INITIALIZATION ====================
     
     /**
-     * Initialize reserved words (index 0-28 in tab)
-     * Reserved words dari Lampiran C:
-     * AND, ARRAY, BEGIN, CASE, CONST, DIV, DOWNTO, DO, ELSE, END,
-     * FOR, FUNCTION, IF, MOD, NOT, OF, OR, PROCEDURE, PROGRAM, RECORD,
-     * REPEAT, STRING, THEN, TO, TYPE, UNTIL, VAR, WHILE, PACKED
+     * Initialize reserved words
      */
     void initializeReservedWords();
     
     /**
      * Initialize standard types and functions
-     * Adds: integer, real, boolean, char types
-     * Adds: read, write, readln, writeln functions
      */
     void initializeStandardIdentifiers();
     
@@ -283,4 +242,4 @@ public:
 string objectClassToString(int obj);
 string typeCodeToString(int typ);
 
-#endif // SYMBOL_TABLE_H
+#endif

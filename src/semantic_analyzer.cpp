@@ -76,9 +76,9 @@ void SemanticAnalyzer::visitProgram(ProgramNode* node) {
 }
 
 void SemanticAnalyzer::visitVarDecl(VarDeclNode* node) {
-    // Check for redeclaration in current scope
+    // Check for redeclaration in current scope only
     TabEntry* existing = symbolTable.lookupSymbol(node->getName(), true);
-    if (existing && existing->lev == currentLevel) {
+    if (existing) {
         reportError("Variable '" + node->getName() + "' already declared in this scope", node->getLineNumber());
         return;
     }
