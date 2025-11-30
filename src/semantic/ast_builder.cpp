@@ -1,5 +1,7 @@
 #include "../include/ast_builder.h"
 #include <algorithm>
+#include <limits>
+#include <stdexcept>
 
 using namespace std;
 
@@ -91,15 +93,44 @@ void ASTBuilder::setPosition(shared_ptr<ASTNode> astNode, shared_ptr<ParseNode> 
 }
 
 int ASTBuilder::extractNumberFromExpression(shared_ptr<ParseNode> expr) const {
-    // Navigate through expression tree to find NUMBER terminal
-    // <expression> → <simple-expression> → <term> → <factor> → NUMBER
     if (!expr) return 0;
 
     if (expr->getType() == "NUMBER") {
-        return stoi(expr->getValue());
+        const string s = expr->getValue();
+        try {
+            long long v = std::stoll(s);
+            // clamp to int range (or return as-is if you prefer)
+            if (v < std::numeric_limits<int>::min() || v > std::numeric_limits<int>::max()) {
+                // out of int range -> return 0 to signal failure (caller should handle)
+                return 0;
+            }
+            return static_cast<int>(v);
+        } catch (const std::invalid_argument&) {
+            // not a plain integer
+            return 0;
+        } catch (const std::out_of_range&) {
+            return 0;
+        }
     }
 
-    // Recursively search children
+    if (expr->getType() == "CHAR_LITERAL") {
+        const string cs = expr->getValue();
+        if (cs.empty()) return 0;
+        // handle simple escape like '\n', '\t', '\'' , '\\'
+        if (cs.size() >= 2 && cs[0] == '\\') {
+            char esc = cs[1];
+            switch (esc) {
+                case 'n': return '\n';
+                case 't': return '\t';
+                case '\\': return '\\';
+                case '\'': return '\'';
+                case '0': return '\0';
+                default: return static_cast<int>(esc);
+            }
+        }
+        return static_cast<int>(cs[0]);
+    }
+
     for (const auto& child : expr->getChildren()) {
         int result = extractNumberFromExpression(child);
         if (result != 0) return result;
@@ -304,12 +335,25 @@ vector<shared_ptr<ConstDeclNode>> ASTBuilder::convertConstDeclaration(shared_ptr
                         }
                         // Check if it's a number
                         else if (isdigit(valStr[0]) || (valStr[0] == '-' && valStr.length() > 1)) {
-                            if (valStr.find('.') != string::npos) {
-                                value = make_shared<NumberNode>(stod(valStr));
-                            } else {
-                                value = make_shared<NumberNode>(stoi(valStr));
+                            try {
+                                if (valStr.find('.') != string::npos) {
+                                    double dv = std::stod(valStr);
+                                    value = make_shared<NumberNode>(dv);
+                                } else {
+                                    long long iv = std::stoll(valStr);
+                                    // optional: check range before casting
+                                    if (iv < std::numeric_limits<int>::min() ||
+                                        iv > std::numeric_limits<int>::max()) {
+                                        error("Integer constant out of range: " + valStr);
+                                    } else {
+                                        value = make_shared<NumberNode>(static_cast<int>(iv));
+                                    }
+                                }
+                            } catch (const std::invalid_argument&) {
+                                error("Invalid numeric constant: " + valStr);
+                            } catch (const std::out_of_range&) {
+                                error("Numeric constant out of range: " + valStr);
                             }
-                            setPosition(value, valNode);
                         }
                         // Check if it's boolean
                         else if (valStr == "true" || valStr == "false") {
@@ -331,10 +375,25 @@ vector<shared_ptr<ConstDeclNode>> ASTBuilder::convertConstDeclaration(shared_ptr
                 // Fallback: direct value nodes (if parser structure changes)
                 else if (valNode->getType() == "NUMBER") {
                     string numStr = valNode->getValue();
-                    if (numStr.find('.') != string::npos) {
-                        value = make_shared<NumberNode>(stod(numStr));
-                    } else {
-                        value = make_shared<NumberNode>(stoi(numStr));
+                    try {
+                        if (numStr.find('.') != string::npos) {
+                            double dv = std::stod(numStr);
+                            value = make_shared<NumberNode>(dv);
+                        } else {
+                            long long iv = std::stoll(numStr);
+                            if (iv < std::numeric_limits<int>::min() || iv > std::numeric_limits<int>::max()) {
+                                error("Integer constant out of range: " + numStr);
+                                value = make_shared<NumberNode>(0);
+                            } else {
+                                value = make_shared<NumberNode>(static_cast<int>(iv));
+                            }
+                        }
+                    } catch (const std::invalid_argument&) {
+                        error("Invalid numeric constant: " + numStr);
+                        value = make_shared<NumberNode>(0);
+                    } catch (const std::out_of_range&) {
+                        error("Numeric constant out of range: " + numStr);
+                        value = make_shared<NumberNode>(0);
                     }
                     setPosition(value, valNode);
                 } else if (valNode->getType() == "STRING_LITERAL") {
@@ -1085,10 +1144,25 @@ shared_ptr<ASTNode> ASTBuilder::convertFactor(shared_ptr<ParseNode> node) {
         } else if (child->getType() == "NUMBER") {
             string numStr = child->getValue();
             shared_ptr<ASTNode> numNode;
-            if (numStr.find('.') != string::npos) {
-                numNode = make_shared<NumberNode>(stod(numStr));
-            } else {
-                numNode = make_shared<NumberNode>(stoi(numStr));
+            try {
+                if (numStr.find('.') != string::npos) {
+                    double dv = std::stod(numStr);
+                    numNode = make_shared<NumberNode>(dv);
+                } else {
+                    long long iv = std::stoll(numStr);
+                    if (iv < std::numeric_limits<int>::min() || iv > std::numeric_limits<int>::max()) {
+                        error("Integer literal out of range: " + numStr);
+                        numNode = make_shared<NumberNode>(0);
+                    } else {
+                        numNode = make_shared<NumberNode>(static_cast<int>(iv));
+                    }
+                }
+            } catch (const std::invalid_argument&) {
+                error("Invalid numeric literal: " + numStr);
+                numNode = make_shared<NumberNode>(0);
+            } catch (const std::out_of_range&) {
+                error("Numeric literal out of range: " + numStr);
+                numNode = make_shared<NumberNode>(0);
             }
             setPosition(numNode, child);
             return numNode;
