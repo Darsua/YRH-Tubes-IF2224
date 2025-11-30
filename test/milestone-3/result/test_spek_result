@@ -1,0 +1,202 @@
+Using DFA-based lexer
+DFA rules file: rules/pascal_lexicon.dfa
+Processing file: test/milestone-3/test_spek.pas
+----------------------------------------
+----------------------------------------
+Building AST...
+----------------------------------------
+AST built successfully!
+----------------------------------------
+Starting semantic analysis...
+----------------------------------------
+✓ No semantic errors found
+----------------------------------------
+SYMBOL TABLE:
+----------------------------------------
+
+=== TAB (Identifier Table) ===
+  Idx     Identifier  Link         Obj      Type   Ref  Nrm  Lev   Adr
+--------------------------------------------------------------------------------
+    0            dan     0    RESERVED     NOTYP     0    1    0     0
+    1          larik     0    RESERVED     NOTYP     0    1    0     0
+    2          mulai     1    RESERVED     NOTYP     0    1    0     0
+    3           case     2    RESERVED     NOTYP     0    1    0     0
+    4      konstanta     3    RESERVED     NOTYP     0    1    0     0
+    5           bagi     4    RESERVED     NOTYP     0    1    0     0
+    6       turun_ke     5    RESERVED     NOTYP     0    1    0     0
+    7        lakukan     6    RESERVED     NOTYP     0    1    0     0
+    8     selain_itu     7    RESERVED     NOTYP     0    1    0     0
+    9        selesai     8    RESERVED     NOTYP     0    1    0     0
+   10          untuk     9    RESERVED     NOTYP     0    1    0     0
+   11         fungsi    10    RESERVED     NOTYP     0    1    0     0
+   12           jika    11    RESERVED     NOTYP     0    1    0     0
+   13            mod    12    RESERVED     NOTYP     0    1    0     0
+   14          tidak    13    RESERVED     NOTYP     0    1    0     0
+   15           dari    14    RESERVED     NOTYP     0    1    0     0
+   16           atau    15    RESERVED     NOTYP     0    1    0     0
+   17       prosedur    16    RESERVED     NOTYP     0    1    0     0
+   18        program    17    RESERVED     NOTYP     0    1    0     0
+   19         record    18    RESERVED     NOTYP     0    1    0     0
+   20         ulangi    19    RESERVED     NOTYP     0    1    0     0
+   21         string    20    RESERVED     NOTYP     0    1    0     0
+   22           maka    21    RESERVED     NOTYP     0    1    0     0
+   23             ke    22    RESERVED     NOTYP     0    1    0     0
+   24           tipe    23    RESERVED     NOTYP     0    1    0     0
+   25         sampai    24    RESERVED     NOTYP     0    1    0     0
+   26       variabel    25    RESERVED     NOTYP     0    1    0     0
+   27         selama    26    RESERVED     NOTYP     0    1    0     0
+   28         packed    27    RESERVED     NOTYP     0    1    0     0
+   29        integer    -1        TYPE       INT     0    1    0     1
+   30           real    29        TYPE      REAL     0    1    0     1
+   31        boolean    30        TYPE      BOOL     0    1    0     1
+   32           char    31        TYPE      CHAR     0    1    0     1
+   33           true    32       CONST      BOOL     1    1    0     1
+   34          false    33       CONST      BOOL     0    1    0     0
+   35           read    34        PROC     NOTYP     0    1    0     0
+   36         readln    35        PROC     NOTYP     0    1    0     1
+   37          write    36        PROC     NOTYP     0    1    0     2
+   38        writeln    37        PROC     NOTYP     0    1    0     3
+   39          test0    38     PROGRAM     NOTYP     0    1    0     0
+   40            ten    39       CONST       INT     0    1    0    10
+   41           plus    40       CONST      CHAR     0    1    0    43
+   42            row    41        TYPE     ARRAY     0    1    0     0
+   43        complex    42        TYPE    RECORD     0    1    0     0
+   44              i    43         VAR       INT     0    1    0     0
+   45              j    44         VAR       INT     0    1    0     1
+   46              p    45         VAR      BOOL     0    1    0     2
+   47              z    46         VAR    RECORD     0    1    0     3
+   48              x    47         VAR      REAL     0    1    0     4
+   49              y    48         VAR      REAL     0    1    0     5
+   50         matrix    49         VAR     NOTYP     0    1    0     6
+   51        pattern    50         VAR     NOTYP     0    1    0     7
+   52          dummy    51        PROC     NOTYP     1    1    0     1
+   53              i    52         VAR       INT     0    1    1     0
+   54              z    53         VAR     NOTYP     0    1    1     1
+   55              u    54         VAR     ARRAY     0    1    1     0
+   56              v    55         VAR     ARRAY     0    1    1     0
+   57             h1    56         VAR     NOTYP     0    1    1     0
+   58             h2    57         VAR     NOTYP     0    1    1     1
+   59           null    58        FUNC      BOOL     2    1    1     2
+   60              x    59         VAR      REAL     0    1    2     0
+   61              y    60         VAR      REAL     0    1    2     1
+   62              z    61         VAR     NOTYP     0    1    2     2
+   63              a    62         VAR     NOTYP     0    1    2     0
+   64              u    63         VAR      CHAR     0    1    2     1
+
+=== BTAB (Block Table) ===
+  Idx    Last    Lpar    Psze    Vsze
+----------------------------------------
+    0      51       0       0       8
+    1      58      54       2       2
+    2      64      62       3       2
+    3      64       0       0       0
+
+=== ATAB (Array Table) ===
+  Idx    Xtyp    Etyp    Eref     Low    High    Elsz    Size
+-----------------------------------------------------------------
+    0       1       2       0       1       0       1       0
+----------------------------------------
+DECORATED AST:
+----------------------------------------
+ProgramNode(name: 'test0', tab_index: 39)
+  Declarations:
+    ConstDecl(name: 'ten', type: integer, tab_index: 40)
+      Value:
+        Number(int: 10, type: integer)
+    ConstDecl(name: 'plus', type: char, tab_index: 41)
+      Value:
+        Char(value: '+')
+    TypeDecl(name: 'row', kind: array, tab_index: 42)
+      ArrayType(range: [1..0], element_type: real, atab_index: 0)
+    TypeDecl(name: 'complex', kind: record, tab_index: 43)
+      RecordType()
+    VarDecl(name: 'i', type: integer, tab_index: 44, level: 0)
+    VarDecl(name: 'j', type: integer, tab_index: 45, level: 0)
+    VarDecl(name: 'p', type: boolean, tab_index: 46, level: 0)
+    VarDecl(name: 'z', type: unknown, tab_index: 47, level: 0)
+    VarDecl(name: 'x', type: real, tab_index: 48, level: 0)
+    VarDecl(name: 'y', type: real, tab_index: 49, level: 0)
+    VarDecl(name: 'matrix', type: array, tab_index: 50, level: 0)
+    VarDecl(name: 'pattern', type: array, tab_index: 51, level: 0)
+    ProcedureDecl(name: 'dummy', tab_index: 52)
+      Parameters:
+        VarDecl(name: 'i', type: integer, tab_index: 53, level: 1, parameter)
+        VarDecl(name: 'z', type: unknown, tab_index: 54, level: 1, parameter)
+      Declarations:
+        VarDecl(name: 'u', type: unknown, tab_index: 55, level: 1)
+        VarDecl(name: 'v', type: unknown, tab_index: 56, level: 1)
+        VarDecl(name: 'h1', type: record, tab_index: 57, level: 1)
+        VarDecl(name: 'h2', type: record, tab_index: 58, level: 1)
+        FunctionDecl(name: 'null', return_type: boolean, tab_index: 59)
+          Parameters:
+            VarDecl(name: 'x', type: real, tab_index: 60, level: 2, parameter)
+            VarDecl(name: 'y', type: real, tab_index: 61, level: 2, parameter)
+            VarDecl(name: 'z', type: unknown, tab_index: 62, level: 2, parameter)
+          Declarations:
+            VarDecl(name: 'a', type: array, tab_index: 63, level: 2)
+            VarDecl(name: 'u', type: char, tab_index: 64, level: 2)
+          Body:
+            CompoundStatement
+              While
+                Condition:
+                  BinOp(op: '<', type: boolean)
+                    Left:
+                      Var(name: 'x', tab_index: 48, type: real, level: 2)
+                    Right:
+                      Var(name: 'y', tab_index: 49, type: real, level: 2)
+                Body:
+                  Assign
+                    Target:
+                      Var(name: 'x', tab_index: 48, type: real, level: 2)
+                    Value:
+                      BinOp(op: '+', type: real)
+                        Left:
+                          Var(name: 'x', tab_index: 48, type: real, level: 2)
+                        Right:
+                          Number(int: 1, type: integer)
+              Assign
+                Target:
+                  Var(name: 'null', tab_index: 59, type: boolean, level: 1)
+                Value:
+                  BinOp(op: '=', type: boolean)
+                    Left:
+                      Var(name: 'x', tab_index: 48, type: real, level: 2)
+                    Right:
+                      Var(name: 'y', tab_index: 49, type: real, level: 2)
+      Body:
+        CompoundStatement
+          Assign
+            Target:
+              Var(name: 'p', tab_index: 46, type: boolean)
+            Value:
+              Var(name: 'null', tab_index: 59, type: boolean, level: 1)
+  Body:
+    CompoundStatement
+      Assign
+        Target:
+          Var(name: 'i', tab_index: 44, type: integer, level: 1)
+        Value:
+          Number(int: 85, type: integer)
+      Assign
+        Target:
+          Var(name: 'j', tab_index: 45, type: integer)
+        Value:
+          Number(int: 51, type: integer)
+      RepeatStatement
+        Body:
+          If
+            Condition:
+              BinOp(op: '>', type: boolean)
+                Left:
+                  Var(name: 'i', tab_index: 44, type: integer, level: 1)
+                Right:
+                  Var(name: 'j', tab_index: 45, type: integer)
+        Until:
+          BinOp(op: '=', type: boolean)
+            Left:
+              Var(name: 'i', tab_index: 44, type: integer, level: 1)
+            Right:
+              Var(name: 'j', tab_index: 45, type: integer)
+----------------------------------------
+Semantic analysis completed!
+----------------------------------------
