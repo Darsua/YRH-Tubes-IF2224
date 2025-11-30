@@ -271,7 +271,6 @@ shared_ptr<ParseNode> Parser::parseConstDeclaration() {
         node->addChild(eqNode);
 
         token = currentToken();
-        token = currentToken();
         string constValue = "";
 
         if (match(ARITHMETIC_OPERATOR)) {

@@ -3,6 +3,7 @@ program TestVarParameter;
 konstanta
     MAX_SIZE = 100;
     PI = 314;
+    adalah_benar = true;
 
 variabel
     a, b: integer;
