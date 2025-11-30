@@ -684,6 +684,18 @@ shared_ptr<ASTNode> ASTBuilder::convertStatement(shared_ptr<ParseNode> node) {
     
     string type = node->getType();
     
+    // If it's a generic "statement" wrapper, look inside for the actual statement
+    if (type == "statement") {
+        // Find the first child that is an actual statement type
+        for (const auto& child : node->getChildren()) {
+            if (child) {
+                auto stmt = convertStatement(child);
+                if (stmt) return stmt;
+            }
+        }
+        return nullptr;
+    }
+    
     if (type == "assignment-statement") {
         return convertAssignmentStatement(node);
     }
@@ -752,22 +764,36 @@ shared_ptr<IfNode> ASTBuilder::convertIfStatement(shared_ptr<ParseNode> node) {
     for (const auto& child : children) {
         if (!child) continue;
         
-        if (child->getType() == "KEYWORD" && child->getValue() == "then") {
+        if (child->getType() == "KEYWORD" && child->getValue() == "maka") {
             foundThen = true;
             continue;
         }
-        if (child->getType() == "KEYWORD" && child->getValue() == "else") {
+        if (child->getType() == "KEYWORD" && child->getValue() == "selain_itu") {
             foundElse = true;
             continue;
         }
         
         if (foundThen && !foundElse && !thenStmt) {
-            if (child->getType() != "KEYWORD" && child->getType() != "expression") {
+            // The next child should be <statement> or a statement type
+            if (child->getType() == "statement" || 
+                child->getType() == "assignment-statement" ||
+                child->getType() == "compound-statement" ||
+                child->getType() == "if-statement" ||
+                child->getType() == "while-statement" ||
+                child->getType() == "for-statement" ||
+                child->getType() == "procedure-call") {
                 thenStmt = convertStatement(child);
             }
         }
         else if (foundElse && !elseStmt) {
-            if (child->getType() != "KEYWORD") {
+            // The next child should be <statement> or a statement type
+            if (child->getType() == "statement" || 
+                child->getType() == "assignment-statement" ||
+                child->getType() == "compound-statement" ||
+                child->getType() == "if-statement" ||
+                child->getType() == "while-statement" ||
+                child->getType() == "for-statement" ||
+                child->getType() == "procedure-call") {
                 elseStmt = convertStatement(child);
             }
         }
@@ -786,7 +812,7 @@ shared_ptr<WhileNode> ASTBuilder::convertWhileStatement(shared_ptr<ParseNode> no
     
     if (!condition) return nullptr;
     
-    // Find statement after 'do'
+    // Find statement after 'lakukan'
     const auto& children = node->getChildren();
     shared_ptr<ASTNode> body = nullptr;
     
@@ -794,14 +820,22 @@ shared_ptr<WhileNode> ASTBuilder::convertWhileStatement(shared_ptr<ParseNode> no
     for (const auto& child : children) {
         if (!child) continue;
         
-        if (child->getType() == "KEYWORD" && child->getValue() == "do") {
+        if (child->getType() == "KEYWORD" && child->getValue() == "lakukan") {
             foundDo = true;
             continue;
         }
         
-        if (foundDo && !body) {
-            if (child->getType() != "KEYWORD" && child->getType() != "expression") {
+        if (foundDo) {
+            // The next child should be <statement> or a statement type
+            if (child->getType() == "statement" || 
+                child->getType() == "assignment-statement" ||
+                child->getType() == "compound-statement" ||
+                child->getType() == "if-statement" ||
+                child->getType() == "while-statement" ||
+                child->getType() == "for-statement" ||
+                child->getType() == "procedure-call") {
                 body = convertStatement(child);
+                break;
             }
         }
     }
@@ -829,30 +863,38 @@ shared_ptr<ForNode> ASTBuilder::convertForStatement(shared_ptr<ParseNode> node) 
     bool isDownto = false;
     for (const auto& child : node->getChildren()) {
         if (child && child->getType() == "KEYWORD") {
-            if (child->getValue() == "downto") {
+            if (child->getValue() == "turun_ke") {
                 isDownto = true;
                 break;
             }
         }
     }
     
-    // Find body
+    // Find body (the statement after 'lakukan')
     const auto& children = node->getChildren();
     shared_ptr<ASTNode> body = nullptr;
     
+    // Look for <statement> node after KEYWORD(lakukan)
     bool foundDo = false;
     for (const auto& child : children) {
         if (!child) continue;
         
-        if (child->getType() == "KEYWORD" && child->getValue() == "do") {
+        if (child->getType() == "KEYWORD" && child->getValue() == "lakukan") {
             foundDo = true;
             continue;
         }
         
-        if (foundDo && !body) {
-            if (child->getType() != "KEYWORD" && child->getType() != "expression" && 
-                child->getType() != "IDENTIFIER" && child->getType() != "ASSIGN_OPERATOR") {
+        if (foundDo) {
+            // The next child should be <statement> or a statement type
+            if (child->getType() == "statement" || 
+                child->getType() == "assignment-statement" ||
+                child->getType() == "compound-statement" ||
+                child->getType() == "if-statement" ||
+                child->getType() == "while-statement" ||
+                child->getType() == "for-statement" ||
+                child->getType() == "procedure-call") {
                 body = convertStatement(child);
+                break;
             }
         }
     }
@@ -905,11 +947,13 @@ shared_ptr<ASTNode> ASTBuilder::convertExpression(shared_ptr<ParseNode> node) {
         auto left = convertSimpleExpression(simpleExprs[0]);
         auto right = convertSimpleExpression(simpleExprs[1]);
         
-        // Find relational operator
+        // Find relational operator (RELATIONAL_OPERATOR token)
         string op = "";
-        auto relOp = findChild(node, "relational-operator");
-        if (relOp && !relOp->getChildren().empty()) {
-            op = relOp->getChildren()[0]->getValue();
+        for (const auto& child : node->getChildren()) {
+            if (child && child->getType() == "RELATIONAL_OPERATOR") {
+                op = child->getValue();
+                break;
+            }
         }
         
         return make_shared<BinOpNode>(op, left, right);
