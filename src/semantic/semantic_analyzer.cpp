@@ -669,7 +669,24 @@ void SemanticAnalyzer::visitVar(VarNode* node) {
 
     auto* symbol = symbolTable.lookupSymbol(node->getName());
     if (!symbol) {
-        reportError("Variable '" + node->getName() + "' not declared", node->getLineNumber());
+        reportError("Identifier '" + node->getName() + "' not declared", node->getLineNumber());
+        node->setDataType(DataType::UNKNOWN);
+        node->setSymbolTableIndex(-1);
+        node->setScopeLevel(currentLevel);
+        return;
+    }
+
+    // Check if this is a valid identifier for use in expressions
+    // Accept: VARIABLE (1), CONSTANT (0), and FUNCTION (4) when used as value
+    int objClass = symbol->obj;
+    if (objClass != 0 && objClass != 1 && objClass != 4) {
+        // obj 0=CONSTANT, 1=VARIABLE, 2=TYPE, 3=PROCEDURE, 4=FUNCTION, 5=RESERVED, 6=PROGRAM
+        string objName = (objClass == 2) ? "type" :
+                        (objClass == 3) ? "procedure" :
+                        (objClass == 5) ? "reserved word" :
+                        (objClass == 6) ? "program" : "identifier";
+        reportError("'" + node->getName() + "' is a " + objName + ", not usable in expressions",
+                    node->getLineNumber());
         node->setDataType(DataType::UNKNOWN);
         node->setSymbolTableIndex(-1);
         node->setScopeLevel(currentLevel);
