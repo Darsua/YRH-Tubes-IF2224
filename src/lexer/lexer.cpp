@@ -5,9 +5,9 @@
 #include <map>
 #include <utility>
 
-#include "include/lexer.h"
-#include "include/token.h"
-#include "include/dfa.h"
+#include "../include/lexer.h"
+#include "../include/token.h"
+#include "../include/dfa.h"
 
 using namespace std;
 

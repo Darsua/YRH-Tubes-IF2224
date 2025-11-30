@@ -1,4 +1,4 @@
-#include "include/dfa.h"
+#include "../include/dfa.h"
 #include <sstream>
 #include <fstream>
 #include <vector>

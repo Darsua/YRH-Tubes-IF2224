@@ -1,5 +1,4 @@
-#include "include/semantic_analyzer.h"
-#include <iostream>
+#include "../include/semantic_analyzer.h"
 #include <algorithm>
 
 using namespace std;

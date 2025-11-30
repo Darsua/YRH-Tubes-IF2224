@@ -1,4 +1,4 @@
-#include "include/symbol_table.h"
+#include "../include/symbol_table.h"
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
