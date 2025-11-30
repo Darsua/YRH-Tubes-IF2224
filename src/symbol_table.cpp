@@ -5,12 +5,12 @@
 
 using namespace std;
 
-// Reserved words sesuai Lampiran C (29 reserved words)
+// Reserved words dalam bahasa Indonesia (29 reserved words)
 const vector<string> SymbolTable::RESERVED_WORDS = {
-    "and", "array", "begin", "case", "const", "div", "downto", "do", 
-    "else", "end", "for", "function", "if", "mod", "not", "of", "or", 
-    "procedure", "program", "record", "repeat", "string", "then", "to", 
-    "type", "until", "var", "while", "packed"
+    "dan", "larik", "mulai", "case", "konstanta", "bagi", "turun_ke", "lakukan",
+    "selain_itu", "selesai", "untuk", "fungsi", "jika", "mod", "tidak", "dari", "atau",
+    "prosedur", "program", "record", "ulangi", "string", "maka", "ke",
+    "tipe", "sampai", "variabel", "selama", "packed"
 };
 
 // ==================== CONSTRUCTOR ====================
@@ -35,8 +35,9 @@ SymbolTable::SymbolTable() : level(0) {
     // Push global block ke display
     display.push(0);
     
-    // Initialize standard identifiers (integer, boolean, etc)
-    initializeStandardIdentifiers();
+    // Note: Standard identifiers (integer, real, boolean, char, true, false)
+    // and built-in procedures (read, readln, write, writeln) are handled
+    // separately and not added to TAB to keep user identifiers starting at 29
 }
 
 // ==================== SCOPE MANAGEMENT ====================
@@ -78,13 +79,21 @@ int SymbolTable::getCurrentBlock() const {
 
 int SymbolTable::addSymbol(const TabEntry& entry) {
     int index = tab.size();
-    tab.push_back(entry);
+    
+    // Set link to previous symbol in current block (for linked-list traversal)
+    TabEntry newEntry = entry;
+    int currentBlock = getCurrentBlock();
+    if (currentBlock >= 0 && currentBlock < (int)btab.size()) {
+        // Link to previous 'last' symbol in this block
+        newEntry.link = btab[currentBlock].last;
+    }
+    
+    tab.push_back(newEntry);
     
     // Update name index untuk quick lookup
     nameIndex[entry.identifier].push_back(index);
     
     // Update current block's last pointer
-    int currentBlock = getCurrentBlock();
     if (currentBlock >= 0 && currentBlock < (int)btab.size()) {
         btab[currentBlock].last = index;
     }
@@ -276,6 +285,29 @@ void SymbolTable::initializeStandardIdentifiers() {
     charType.lev = 0;
     charType.adr = 1;  // Size = 1
     int charIdx = addSymbol(charType);
+    
+    // Add boolean constants: true and false
+    TabEntry trueConst;
+    trueConst.identifier = "true";
+    trueConst.link = charIdx;
+    trueConst.obj = static_cast<int>(ObjectClass::CONSTANT);
+    trueConst.typ = static_cast<int>(TypeCode::BOOLS);
+    trueConst.ref = 1;  // Value = 1 (true)
+    trueConst.nrm = 1;
+    trueConst.lev = 0;
+    trueConst.adr = 1;  // TRUE = 1
+    int trueIdx = addSymbol(trueConst);
+    
+    TabEntry falseConst;
+    falseConst.identifier = "false";
+    falseConst.link = trueIdx;
+    falseConst.obj = static_cast<int>(ObjectClass::CONSTANT);
+    falseConst.typ = static_cast<int>(TypeCode::BOOLS);
+    falseConst.ref = 0;  // Value = 0 (false)
+    falseConst.nrm = 1;
+    falseConst.lev = 0;
+    falseConst.adr = 0;  // FALSE = 0
+    int falseIdx = addSymbol(falseConst);
     
     // Add standard procedures: read, readln, write, writeln
     
@@ -479,6 +511,7 @@ string objectClassToString(int obj) {
         case 3: return "PROC";
         case 4: return "FUNC";
         case 5: return "RESERVED";
+        case 6: return "PROGRAM";
         default: return "UNKNOWN";
     }
 }

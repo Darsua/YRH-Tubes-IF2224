@@ -15,7 +15,8 @@ enum class ObjectClass {
     TYPE = 2,        // Type definition
     PROCEDURE = 3,   // Prosedur
     FUNCTION = 4,    // Fungsi
-    RESERVED = 5     // Reserved word
+    RESERVED = 5,    // Reserved word
+    PROGRAM = 6      // Program name
 };
 
 // Type codes untuk tab.typ

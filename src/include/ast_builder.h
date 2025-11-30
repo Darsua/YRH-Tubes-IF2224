@@ -68,6 +68,9 @@ private:
     // Helper for variable reference (could be array access or record access)
     shared_ptr<ASTNode> convertVariableAccess(shared_ptr<ParseNode> node);
     
+    // Helper to extract number from nested expression tree
+    int extractNumberFromExpression(shared_ptr<ParseNode> expr) const;
+    
     // Error handling
     void error(const string& message);
 

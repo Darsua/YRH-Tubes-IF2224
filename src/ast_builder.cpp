@@ -77,6 +77,24 @@ void ASTBuilder::error(const string& message) {
     errors.push_back("AST Builder Error: " + message);
 }
 
+int ASTBuilder::extractNumberFromExpression(shared_ptr<ParseNode> expr) const {
+    // Navigate through expression tree to find NUMBER terminal
+    // <expression> → <simple-expression> → <term> → <factor> → NUMBER
+    if (!expr) return 0;
+    
+    if (expr->getType() == "NUMBER") {
+        return stoi(expr->getValue());
+    }
+    
+    // Recursively search children
+    for (const auto& child : expr->getChildren()) {
+        int result = extractNumberFromExpression(child);
+        if (result != 0) return result;
+    }
+    
+    return 0;
+}
+
 // ==================== MAIN BUILD FUNCTION ====================
 
 shared_ptr<ProgramNode> ASTBuilder::buildAST(shared_ptr<ParseNode> tree) {
@@ -190,27 +208,52 @@ vector<shared_ptr<VarDeclNode>> ASTBuilder::convertVarDeclaration(shared_ptr<Par
     
     if (!node) return varDecls;
     
-    // var <identifier-list> : <type> ;
-    auto identList = findChild(node, "identifier-list");
-    auto typeNode = findChild(node, "type");
+    // var-declaration can have multiple groups:
+    // <identifier-list> : <type> ; <identifier-list> : <type> ; ...
+    const auto& children = node->getChildren();
     
-    if (!identList || !typeNode) return varDecls;
+    vector<string> currentIdentifiers;
+    DataType currentType = DataType::UNKNOWN;
+    string customTypeName = "";
     
-    // Get type
-    DataType varType = convertType(typeNode);
-    
-    // Get all identifiers
-    vector<string> identifiers;
-    for (const auto& child : identList->getChildren()) {
-        if (child && child->getType() == "IDENTIFIER") {
-            identifiers.push_back(child->getValue());
+    for (const auto& child : children) {
+        if (!child) continue;
+        
+        if (child->getType() == "identifier-list") {
+            // Extract identifiers from this list
+            currentIdentifiers.clear();
+            for (const auto& idChild : child->getChildren()) {
+                if (idChild && idChild->getType() == "IDENTIFIER") {
+                    currentIdentifiers.push_back(idChild->getValue());
+                }
+            }
         }
-    }
-    
-    // Create VarDeclNode for each identifier
-    for (const auto& ident : identifiers) {
-        auto varDecl = make_shared<VarDeclNode>(ident, varType);
-        varDecls.push_back(varDecl);
+        else if (child->getType() == "type") {
+            // Check if type is a custom type (IDENTIFIER) or primitive (KEYWORD)
+            customTypeName = "";
+            auto customTypeNode = findChild(child, "custom-type");
+            if (customTypeNode) {
+                // custom-type node directly contains the type name as value
+                customTypeName = customTypeNode->getValue();
+            }
+            
+            // Get type for current identifier list
+            currentType = convertType(child);
+            
+            // Create VarDeclNode for each identifier in current group
+            for (const auto& ident : currentIdentifiers) {
+                auto varDecl = make_shared<VarDeclNode>(ident, currentType);
+                if (!customTypeName.empty()) {
+                    varDecl->setCustomTypeName(customTypeName);
+                }
+                varDecls.push_back(varDecl);
+            }
+            
+            // Reset for next group
+            currentIdentifiers.clear();
+            currentType = DataType::UNKNOWN;
+            customTypeName = "";
+        }
     }
     
     return varDecls;
@@ -221,21 +264,52 @@ vector<shared_ptr<ConstDeclNode>> ASTBuilder::convertConstDeclaration(shared_ptr
     
     if (!node) return constDecls;
     
-    // const ID = <constant> ; [ID = <constant> ;]*
+    // const ID = <constant-value> ; [ID = <constant-value> ;]*
     const auto& children = node->getChildren();
     
     for (size_t i = 0; i < children.size(); i++) {
         if (children[i] && children[i]->getType() == "IDENTIFIER") {
             string constName = children[i]->getValue();
             
-            // Look for value (NUMBER, STRING_LITERAL, CHAR_LITERAL, or identifier)
+            // Look for value after '=' (should be <constant-value> node)
             shared_ptr<ASTNode> value;
             
             if (i + 2 < children.size()) {
                 auto valNode = children[i + 2];
                 
-                if (valNode->getType() == "NUMBER") {
-                    // Check if it's integer or real
+                // Check if it's <constant-value> wrapper
+                if (valNode->getType() == "constant-value") {
+                    // Extract actual value from constant-value node
+                    string valStr = valNode->getValue();
+                    
+                    // Try to determine type from value string
+                    if (!valStr.empty()) {
+                        // Check if it's a string (has quotes)
+                        if ((valStr.front() == '\'' && valStr.back() == '\'') ||
+                            (valStr.front() == '"' && valStr.back() == '"')) {
+                            // String literal - remove quotes
+                            value = make_shared<StringNode>(valStr.substr(1, valStr.length() - 2));
+                        }
+                        // Check if it's a number
+                        else if (isdigit(valStr[0]) || (valStr[0] == '-' && valStr.length() > 1)) {
+                            if (valStr.find('.') != string::npos) {
+                                value = make_shared<NumberNode>(stod(valStr));
+                            } else {
+                                value = make_shared<NumberNode>(stoi(valStr));
+                            }
+                        }
+                        // Check if it's boolean
+                        else if (valStr == "true" || valStr == "false") {
+                            value = make_shared<BoolNode>(valStr == "true");
+                        }
+                        // Single character
+                        else if (valStr.length() == 1) {
+                            value = make_shared<CharNode>(valStr[0]);
+                        }
+                    }
+                }
+                // Fallback: direct value nodes (if parser structure changes)
+                else if (valNode->getType() == "NUMBER") {
                     string numStr = valNode->getValue();
                     if (numStr.find('.') != string::npos) {
                         value = make_shared<NumberNode>(stod(numStr));
@@ -250,13 +324,6 @@ vector<shared_ptr<ConstDeclNode>> ASTBuilder::convertConstDeclaration(shared_ptr
                     string charStr = valNode->getValue();
                     if (!charStr.empty()) {
                         value = make_shared<CharNode>(charStr[0]);
-                    }
-                }
-                else if (valNode->getType() == "IDENTIFIER") {
-                    // Boolean constants or reference to another constant
-                    string val = valNode->getValue();
-                    if (val == "true" || val == "false") {
-                        value = make_shared<BoolNode>(val == "true");
                     }
                 }
             }
@@ -276,34 +343,53 @@ vector<shared_ptr<TypeDeclNode>> ASTBuilder::convertTypeDeclaration(shared_ptr<P
     
     if (!node) return typeDecls;
     
-    // type ID = <type-definition> ;
+    // type-declaration contains multiple <type-definition> children
     const auto& children = node->getChildren();
     
-    for (size_t i = 0; i < children.size(); i++) {
-        if (children[i] && children[i]->getType() == "IDENTIFIER") {
-            string typeName = children[i]->getValue();
+    for (const auto& child : children) {
+        if (!child || child->getType() != "type-definition") continue;
+        
+        // <type-definition>: IDENTIFIER = <type> ;
+        const auto& defChildren = child->getChildren();
+        
+        string typeName;
+        shared_ptr<ParseNode> typeNode;
+        
+        // Extract IDENTIFIER and <type> from type-definition
+        for (const auto& defChild : defChildren) {
+            if (!defChild) continue;
             
-            // Look for type definition
-            if (i + 2 < children.size()) {
-                auto typeDef = children[i + 2];
-                
-                if (typeDef->getType() == "type-definition") {
-                    // Check if it's array or record
-                    auto arrayType = findChild(typeDef, "array-type");
-                    auto recordType = findChild(typeDef, "record-type");
-                    
-                    if (arrayType) {
-                        auto arrayNode = convertArrayType(arrayType);
-                        auto typeDecl = make_shared<TypeDeclNode>(typeName, DataType::ARRAY, arrayNode);
-                        typeDecls.push_back(typeDecl);
-                    }
-                    else if (recordType) {
-                        auto recordNode = convertRecordType(recordType);
-                        auto typeDecl = make_shared<TypeDeclNode>(typeName, DataType::RECORD, recordNode);
-                        typeDecls.push_back(typeDecl);
-                    }
-                }
+            if (defChild->getType() == "IDENTIFIER") {
+                typeName = defChild->getValue();
             }
+            else if (defChild->getType() == "type") {
+                typeNode = defChild;
+            }
+        }
+        
+        if (typeName.empty() || !typeNode) continue;
+        
+        // Check what kind of type it is
+        auto arrayType = findChild(typeNode, "array-type");
+        auto recordType = findChild(typeNode, "record-type");
+        
+        if (arrayType) {
+            // Array type
+            auto arrayNode = convertArrayType(arrayType);
+            auto typeDecl = make_shared<TypeDeclNode>(typeName, DataType::ARRAY, arrayNode);
+            typeDecls.push_back(typeDecl);
+        }
+        else if (recordType) {
+            // Record type
+            auto recordNode = convertRecordType(recordType);
+            auto typeDecl = make_shared<TypeDeclNode>(typeName, DataType::RECORD, recordNode);
+            typeDecls.push_back(typeDecl);
+        }
+        else {
+            // Simple type alias (e.g., NilaiRange = integer)
+            DataType baseType = convertType(typeNode);
+            auto typeDecl = make_shared<TypeDeclNode>(typeName, baseType, nullptr);
+            typeDecls.push_back(typeDecl);
         }
     }
     
@@ -411,6 +497,13 @@ DataType ASTBuilder::convertType(shared_ptr<ParseNode> node) {
             return stringToDataType(child->getValue());
         }
         
+        // Check for custom type (IDENTIFIER) - indicates user-defined type
+        if (child && child->getType() == "custom-type") {
+            // Custom types like DaftarNilai, Matrix2D, etc.
+            // Return UNKNOWN to signal that customTypeName should be checked
+            return DataType::UNKNOWN;
+        }
+        
         // Check for array type
         if (child && child->getType() == "array-type") {
             return DataType::ARRAY;
@@ -434,25 +527,40 @@ shared_ptr<ArrayTypeNode> ASTBuilder::convertArrayType(shared_ptr<ParseNode> nod
     
     if (!rangeNode || !typeNode) return nullptr;
     
-    // Get bounds from range (NUMBER .. NUMBER)
+    // Get bounds from range
+    // <range>: <expression> .. <expression>
     int lowBound = 0, highBound = 0;
     const auto& rangeChildren = rangeNode->getChildren();
     
-    for (size_t i = 0; i < rangeChildren.size(); i++) {
-        if (rangeChildren[i] && rangeChildren[i]->getType() == "NUMBER") {
-            if (lowBound == 0) {
-                lowBound = stoi(rangeChildren[i]->getValue());
+    // Find the two expressions (separated by RANGE_OPERATOR)
+    bool foundFirst = false;
+    for (const auto& child : rangeChildren) {
+        if (!child) continue;
+        
+        if (child->getType() == "expression") {
+            // Extract number from nested expression structure
+            int value = extractNumberFromExpression(child);
+            if (!foundFirst) {
+                lowBound = value;
+                foundFirst = true;
             } else {
-                highBound = stoi(rangeChildren[i]->getValue());
+                highBound = value;
                 break;
             }
         }
     }
     
-    // Get element type
-    DataType elemType = convertType(typeNode);
-    
-    return make_shared<ArrayTypeNode>(lowBound, highBound, elemType);
+    // Check if element type is nested array
+    auto nestedArrayNode = findChild(typeNode, "array-type");
+    if (nestedArrayNode) {
+        // Recursive case: multi-dimensional array
+        auto nestedArray = convertArrayType(nestedArrayNode);
+        return make_shared<ArrayTypeNode>(lowBound, highBound, nestedArray);
+    } else {
+        // Base case: simple element type
+        DataType elemType = convertType(typeNode);
+        return make_shared<ArrayTypeNode>(lowBound, highBound, elemType);
+    }
 }
 
 shared_ptr<RecordTypeNode> ASTBuilder::convertRecordType(shared_ptr<ParseNode> node) {
@@ -815,37 +923,40 @@ shared_ptr<ASTNode> ASTBuilder::convertSimpleExpression(shared_ptr<ParseNode> no
     
     // <simple-expression> → [sign] <term> {addop <term>}
     
-    auto terms = findChildren(node, "term");
+    const auto& children = node->getChildren();
+    
+    // Collect terms and operators in order
+    vector<shared_ptr<ParseNode>> terms;
+    vector<string> operators;
+    
+    for (const auto& child : children) {
+        if (!child) continue;
+        
+        if (child->getType() == "term") {
+            terms.push_back(child);
+        }
+        else if (child->getType() == "ARITHMETIC_OPERATOR") {
+            // Additive operators: +, -, or
+            operators.push_back(child->getValue());
+        }
+        else if (child->getType() == "LOGICAL_OPERATOR") {
+            // 'or' is also an additive operator
+            string op = child->getValue();
+            if (op == "or" || op == "atau") {
+                operators.push_back(op);
+            }
+        }
+    }
     
     if (terms.empty()) return nullptr;
     
     // Start with first term
     shared_ptr<ASTNode> result = convertTerm(terms[0]);
     
-    // Find additive operators
-    auto addOps = findChildren(node, "additive-operator");
-    
-    // Combine terms with operators
-    for (size_t i = 1; i < terms.size() && i - 1 < addOps.size(); i++) {
+    // Combine terms with operators (left-to-right)
+    for (size_t i = 1; i < terms.size() && i - 1 < operators.size(); i++) {
         auto right = convertTerm(terms[i]);
-        string op = "";
-        
-        if (!addOps[i - 1]->getChildren().empty()) {
-            op = addOps[i - 1]->getChildren()[0]->getValue();
-        }
-        
-        result = make_shared<BinOpNode>(op, result, right);
-    }
-    
-    // Check for unary sign at the beginning
-    for (const auto& child : node->getChildren()) {
-        if (child && child->getType() == "ARITHMETIC_OPERATOR") {
-            string sign = child->getValue();
-            if (sign == "-") {
-                result = make_shared<UnaryOpNode>("-", result);
-                break;
-            }
-        }
+        result = make_shared<BinOpNode>(operators[i - 1], result, right);
     }
     
     return result;
@@ -856,26 +967,43 @@ shared_ptr<ASTNode> ASTBuilder::convertTerm(shared_ptr<ParseNode> node) {
     
     // <term> → <factor> {mulop <factor>}
     
-    auto factors = findChildren(node, "factor");
+    const auto& children = node->getChildren();
+    
+    // Collect factors and operators in order
+    vector<shared_ptr<ParseNode>> factors;
+    vector<string> operators;
+    
+    for (const auto& child : children) {
+        if (!child) continue;
+        
+        if (child->getType() == "factor") {
+            factors.push_back(child);
+        }
+        else if (child->getType() == "ARITHMETIC_OPERATOR") {
+            // Multiplicative operators: *, bagi, mod, div
+            string op = child->getValue();
+            if (op == "*" || op == "bagi" || op == "mod" || op == "div" || op == "/") {
+                operators.push_back(op);
+            }
+        }
+        else if (child->getType() == "LOGICAL_OPERATOR") {
+            // 'and' is also a multiplicative operator
+            string op = child->getValue();
+            if (op == "and" || op == "dan") {
+                operators.push_back(op);
+            }
+        }
+    }
     
     if (factors.empty()) return nullptr;
     
     // Start with first factor
     shared_ptr<ASTNode> result = convertFactor(factors[0]);
     
-    // Find multiplication operators
-    auto mulOps = findChildren(node, "multiplication-operator");
-    
-    // Combine factors with operators
-    for (size_t i = 1; i < factors.size() && i - 1 < mulOps.size(); i++) {
+    // Combine factors with operators (left-to-right)
+    for (size_t i = 1; i < factors.size() && i - 1 < operators.size(); i++) {
         auto right = convertFactor(factors[i]);
-        string op = "";
-        
-        if (!mulOps[i - 1]->getChildren().empty()) {
-            op = mulOps[i - 1]->getChildren()[0]->getValue();
-        }
-        
-        result = make_shared<BinOpNode>(op, result, right);
+        result = make_shared<BinOpNode>(operators[i - 1], result, right);
     }
     
     return result;

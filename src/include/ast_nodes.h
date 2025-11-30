@@ -93,6 +93,7 @@ class VarDeclNode : public ASTNode {
 private:
     string name;
     DataType varType;
+    string customTypeName;  // For custom types (e.g., "DaftarNilai")
     bool isParameter;       // true jika ini adalah parameter
     bool isVarParameter;    // true jika parameter by reference (var)
 
@@ -101,9 +102,11 @@ public:
     
     string getName() const { return name; }
     DataType getVarType() const { return varType; }
+    string getCustomTypeName() const { return customTypeName; }
     bool getIsParameter() const { return isParameter; }
     bool getIsVarParameter() const { return isVarParameter; }
     
+    void setCustomTypeName(const string& typeName) { customTypeName = typeName; }
     void setIsParameter(bool param) { isParameter = param; }
     void setIsVarParameter(bool varParam) { isVarParameter = varParam; }
     
@@ -151,14 +154,18 @@ private:
     int lowBound;
     int highBound;
     DataType elementType;
+    shared_ptr<ArrayTypeNode> nestedElementType; // For multi-dimensional arrays
     int arrayTableIndex;    // Index di atab
 
 public:
     ArrayTypeNode(int low, int high, DataType elemType);
+    ArrayTypeNode(int low, int high, shared_ptr<ArrayTypeNode> nestedElemType);
     
     int getLowBound() const { return lowBound; }
     int getHighBound() const { return highBound; }
     DataType getElementType() const { return elementType; }
+    shared_ptr<ArrayTypeNode> getNestedElementType() const { return nestedElementType; }
+    bool isMultiDimensional() const { return nestedElementType != nullptr; }
     int getArrayTableIndex() const { return arrayTableIndex; }
     
     void setArrayTableIndex(int index) { arrayTableIndex = index; }

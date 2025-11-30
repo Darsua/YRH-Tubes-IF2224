@@ -17,6 +17,15 @@ private:
     void addError(const std::string& msg) {
         errors.push_back(msg);
     }
+    
+    void reportError(const std::string& message, int line = -1) {
+        std::string fullMessage = "Semantic Error";
+        if (line > 0) {
+            fullMessage += " at line " + std::to_string(line);
+        }
+        fullMessage += ": " + message;
+        addError(fullMessage);
+    }
 
 public:
     SemanticAnalyzer(SymbolTable& symTable);
@@ -51,6 +60,11 @@ public:
     void visitVar(VarNode* node) override;
     void visitArrayAccess(ArrayAccessNode* node) override;
     void visitRecordAccess(RecordAccessNode* node) override;
+    
+private:
+    // Helper methods for address calculation
+    void calculateParameterAddresses(int blockIdx, size_t paramCount);
+    void calculateVariableAddresses(int blockIdx);
 };
 
 #endif
