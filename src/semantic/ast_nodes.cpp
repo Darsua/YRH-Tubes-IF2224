@@ -521,7 +521,39 @@ void ForNode::print(int indent) const {
     }
 }
 
-// ==================== PROCEDURE CALL NODE ====================
+// ==================== REPEAT NODE ====================
+
+RepeatNode::RepeatNode(vector<shared_ptr<ASTNode>> stmts, shared_ptr<ASTNode> cond)
+    : statements(stmts), condition(cond) {
+    dataType = DataType::VOID;
+}
+
+void RepeatNode::accept(ASTVisitor* visitor) {
+    visitor->visitRepeat(this);
+}
+
+void RepeatNode::print(int indent) const {
+    printIndent(indent);
+    cout << "RepeatStatement" << endl;
+    
+    if (!statements.empty()) {
+        printIndent(indent + 1);
+        cout << "Body:" << endl;
+        for (const auto& stmt : statements) {
+            if (stmt) {
+                stmt->print(indent + 2);
+            }
+        }
+    }
+    
+    if (condition) {
+        printIndent(indent + 1);
+        cout << "Until:" << endl;
+        condition->print(indent + 2);
+    }
+}
+
+// ==================== PROCEDURE/FUNCTION CALL NODE ====================
 
 ProcCallNode::ProcCallNode(const string& procName) : name(procName) {
     dataType = DataType::VOID;

@@ -740,7 +740,8 @@ vector<shared_ptr<ASTNode>> ASTBuilder::convertStatementList(shared_ptr<ParseNod
 
         if (child->getType() == "assignment-statement" || child->getType() == "if-statement" ||
             child->getType() == "while-statement" || child->getType() == "for-statement" ||
-            child->getType() == "procedure-call" || child->getType() == "compound-statement") {
+            child->getType() == "procedure-call" || child->getType() == "compound-statement" ||
+            child->getType() == "repeat-statement") {
             auto stmt = convertStatement(child);
             if (stmt) {
                 statements.push_back(stmt);
@@ -780,6 +781,8 @@ shared_ptr<ASTNode> ASTBuilder::convertStatement(shared_ptr<ParseNode> node) {
         return convertWhileStatement(node);
     } else if (type == "for-statement") {
         return convertForStatement(node);
+    } else if (type == "repeat-statement") {
+        return convertRepeatStatement(node);
     } else if (type == "procedure-call") {
         return convertProcedureCall(node);
     } else if (type == "compound-statement") {
@@ -963,6 +966,33 @@ shared_ptr<ForNode> ASTBuilder::convertForStatement(shared_ptr<ParseNode> node) 
     }
 
     return make_shared<ForNode>(loopVar, startExpr, endExpr, isDownto, body);
+}
+
+shared_ptr<ASTNode> ASTBuilder::convertRepeatStatement(shared_ptr<ParseNode> node) {
+    vector<shared_ptr<ASTNode>> statements;
+    shared_ptr<ASTNode> condition;
+    
+    for (auto& child : node->getChildren()) {
+        if (child->getType() == "statement-list") {
+            // Convert all statements in the list
+            for (auto& stmtNode : child->getChildren()) {
+                if (stmtNode->getType() != "SEMICOLON") {
+                    auto stmt = convertStatement(stmtNode);
+                    if (stmt) {
+                        statements.push_back(stmt);
+                    }
+                }
+            }
+        } else if (child->getType() == "expression" || 
+                   child->getType() == "simple-expression" ||
+                   child->getType() == "term" ||
+                   child->getType() == "factor") {
+            // This is the until condition
+            condition = convertExpression(child);
+        }
+    }
+    
+    return make_shared<RepeatNode>(statements, condition);
 }
 
 shared_ptr<ProcCallNode> ASTBuilder::convertProcedureCall(shared_ptr<ParseNode> node) {

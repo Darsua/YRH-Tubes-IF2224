@@ -456,6 +456,26 @@ class ForNode : public ASTNode {
     void print(int indent = 0) const override;
 };
 
+// Repeat Statement Node (repeat...until)
+class RepeatNode : public ASTNode {
+   private:
+    vector<shared_ptr<ASTNode>> statements;
+    shared_ptr<ASTNode> condition;
+
+   public:
+    RepeatNode(vector<shared_ptr<ASTNode>> stmts, shared_ptr<ASTNode> cond);
+
+    vector<shared_ptr<ASTNode>>& getStatements() {
+        return statements;
+    }
+    shared_ptr<ASTNode> getCondition() {
+        return condition;
+    }
+
+    void accept(ASTVisitor* visitor) override;
+    void print(int indent = 0) const override;
+};
+
 // Procedure/Function Call Node
 class ProcCallNode : public ASTNode {
    private:
@@ -675,6 +695,7 @@ class ASTVisitor {
     virtual void visitIf(IfNode* node) = 0;
     virtual void visitWhile(WhileNode* node) = 0;
     virtual void visitFor(ForNode* node) = 0;
+    virtual void visitRepeat(RepeatNode* node) = 0;
     virtual void visitProcCall(ProcCallNode* node) = 0;
     virtual void visitBinOp(BinOpNode* node) = 0;
     virtual void visitUnaryOp(UnaryOpNode* node) = 0;

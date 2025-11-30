@@ -50,6 +50,7 @@ class SemanticAnalyzer : public ASTVisitor {
     void visitIf(IfNode* node) override;
     void visitWhile(WhileNode* node) override;
     void visitFor(ForNode* node) override;
+    void visitRepeat(RepeatNode* node) override;
     void visitProcCall(ProcCallNode* node) override;
     void visitBinOp(BinOpNode* node) override;
     void visitUnaryOp(UnaryOpNode* node) override;

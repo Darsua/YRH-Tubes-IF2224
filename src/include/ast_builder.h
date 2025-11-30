@@ -59,6 +59,7 @@ class ASTBuilder {
     shared_ptr<IfNode> convertIfStatement(shared_ptr<ParseNode> node);
     shared_ptr<WhileNode> convertWhileStatement(shared_ptr<ParseNode> node);
     shared_ptr<ForNode> convertForStatement(shared_ptr<ParseNode> node);
+    shared_ptr<ASTNode> convertRepeatStatement(shared_ptr<ParseNode> node);
     shared_ptr<ProcCallNode> convertProcedureCall(shared_ptr<ParseNode> node);
 
     // Expression conversions

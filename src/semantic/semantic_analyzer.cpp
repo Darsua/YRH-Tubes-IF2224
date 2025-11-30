@@ -550,6 +550,27 @@ void SemanticAnalyzer::visitFor(ForNode* node) {
     }
 }
 
+void SemanticAnalyzer::visitRepeat(RepeatNode* node) {
+    // Process all statements in the repeat body
+    for (auto& stmt : node->getStatements()) {
+        if (stmt) {
+            stmt->accept(this);
+        }
+    }
+    
+    // Process condition
+    if (node->getCondition()) {
+        node->getCondition()->accept(this);
+        
+        // Type check: condition should be boolean
+        DataType condType = node->getCondition()->getDataType();
+        if (condType != DataType::BOOLEAN && condType != DataType::UNKNOWN) {
+            reportError("Repeat-until condition must be boolean, got " + 
+                       dataTypeToString(condType));
+        }
+    }
+}
+
 void SemanticAnalyzer::visitProcCall(ProcCallNode* node) {
     if (!node) return;
 
