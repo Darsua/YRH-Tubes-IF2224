@@ -26,6 +26,7 @@ private:
     string getNodeType(shared_ptr<ParseNode> node) const;
     shared_ptr<ParseNode> findChild(shared_ptr<ParseNode> node, const string& type) const;
     vector<shared_ptr<ParseNode>> findChildren(shared_ptr<ParseNode> node, const string& type) const;
+    void setPosition(shared_ptr<ASTNode> astNode, shared_ptr<ParseNode> parseNode);
     
     // Type conversion
     DataType stringToDataType(const string& typeStr);

@@ -13,15 +13,17 @@ private:
     string nodeType;
     string value;
     vector<shared_ptr<ParseNode>> children;
+    int line;
     
 public:
-    ParseNode(const string& type, const string& val = "");
+    ParseNode(const string& type, const string& val = "", int ln = 0);
     void addChild(shared_ptr<ParseNode> child);
     void print(int indent = 0) const;
     void printTree(const string& prefix = "", bool isLast = true) const;
     string getType() const { return nodeType; }
     string getValue() const { return value; }
     const vector<shared_ptr<ParseNode>>& getChildren() const { return children; }
+    int getLine() const { return line; }
 };
 
 class Parser {

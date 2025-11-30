@@ -11,7 +11,8 @@
 
 using namespace std;
 
-Lexer::Lexer(LexerMode mode, const string& dfaRulesFile) : mode(mode) {
+Lexer::Lexer(LexerMode mode, const string& dfaRulesFile) 
+    : mode(mode), currentLine(1) {
     if (mode == DFA_MODE) {
         if (!dfa.loadDFAFromFile(dfaRulesFile)) {
             printf("ERROR: Failed to load DFA rules from %s\n", dfaRulesFile.c_str());
@@ -19,6 +20,23 @@ Lexer::Lexer(LexerMode mode, const string& dfaRulesFile) : mode(mode) {
             this->mode = SWITCH_MODE;
         } else {
             initializeStateMapping();
+        }
+    }
+}
+
+int Lexer::getChar(FILE* file) {
+    int c = fgetc(file);
+    if (c == '\n') {
+        currentLine++;
+    }
+    return c;
+}
+
+void Lexer::ungetChar(int c, FILE* file) {
+    if (c != EOF) {
+        ungetc(c, file);
+        if (c == '\n') {
+            currentLine--;
         }
     }
 }
@@ -42,9 +60,9 @@ bool Lexer::isArithmeticOperator(const string& word) {
 
 void Lexer::skipWhitespace(FILE* file) {
     int c;
-    while ((c = fgetc(file)) != EOF) {
+    while ((c = getChar(file)) != EOF) {
         if (c != ' ' && c != '\t' && c != '\n' && c != '\r') {
-            ungetc(c, file);
+            ungetChar(c, file);
             break;
         }
     }
@@ -52,8 +70,8 @@ void Lexer::skipWhitespace(FILE* file) {
 
 void Lexer::skipBraceComment(FILE* file) {
     int c;
-    while ((c = fgetc(file)) != EOF && c != '}') {
-        // Do nothing, just keep c o n s u m i n g.
+    while ((c = getChar(file)) != EOF && c != '}') {
+        // Do nothing, just keep consuming and tracking position
     }
 }
 
@@ -61,7 +79,7 @@ void Lexer::skipBraceComment(FILE* file) {
 void Lexer::skipParenComment(FILE* file) {
     int c;
     int prev_c = 0;
-    while ((c = fgetc(file)) != EOF) {
+    while ((c = getChar(file)) != EOF) {
         if (prev_c == '*' && c == ')') {
             break;
         }
@@ -72,7 +90,9 @@ void Lexer::skipParenComment(FILE* file) {
 
 // Switch-based token reading
 Token* Lexer::readTokenSwitch(FILE* file) {
-    int c = fgetc(file);
+    int tokenLine = currentLine;
+    
+    int c = getChar(file);
     
     if (c == EOF) {
         return nullptr;
@@ -84,21 +104,21 @@ Token* Lexer::readTokenSwitch(FILE* file) {
         case '_': {
             string value(1, (char)c);
             int next_c;
-            while ((next_c = fgetc(file)) != EOF && (isalnum(next_c) || next_c == '_')) {
+            while ((next_c = getChar(file)) != EOF && (isalnum(next_c) || next_c == '_')) {
                 value += (char)next_c;
             }
             if (next_c != EOF) {
-                ungetc(next_c, file);
+                ungetChar(next_c, file);
             }
             
             if (isPascalKeyword(value)) {
-                return new Token(KEYWORD, value);
+                return new Token(KEYWORD, value, tokenLine);
             } else if (isLogicalOperator(value)) {
-                return new Token(LOGICAL_OPERATOR, value);
+                return new Token(LOGICAL_OPERATOR, value, tokenLine);
             } else if (isArithmeticOperator(value)) {
-                return new Token(ARITHMETIC_OPERATOR, value);
+                return new Token(ARITHMETIC_OPERATOR, value, tokenLine);
             } else {
-                return new Token(IDENTIFIER, value);
+                return new Token(IDENTIFIER, value, tokenLine);
             }
         }
         
@@ -107,93 +127,93 @@ Token* Lexer::readTokenSwitch(FILE* file) {
             int next_c;
             
             // Handle integer part only - no decimal point handling
-            while ((next_c = fgetc(file)) != EOF && isdigit(next_c)) {
+            while ((next_c = getChar(file)) != EOF && isdigit(next_c)) {
                 value += (char)next_c;
             }
             
             // Put back the non-digit character
             if (next_c != EOF) {
-                ungetc(next_c, file);
+                ungetChar(next_c, file);
             }
             
-            return new Token(NUMBER, value);
+            return new Token(NUMBER, value, tokenLine);
         }
         
         case '+':
         case '-':
         case '/':
-            return new Token(ARITHMETIC_OPERATOR, string(1, (char)c));
+            return new Token(ARITHMETIC_OPERATOR, string(1, (char)c), tokenLine);
             
         case '*':
-            return new Token(ARITHMETIC_OPERATOR, "*");
+            return new Token(ARITHMETIC_OPERATOR, "*", tokenLine);
             
         case '=':
-            return new Token(RELATIONAL_OPERATOR, "=");
+            return new Token(RELATIONAL_OPERATOR, "=", tokenLine);
             
         case '<': {
-            int next_c = fgetc(file);
+            int next_c = getChar(file);
             if (next_c == '>') {
-                return new Token(RELATIONAL_OPERATOR, "<>");
+                return new Token(RELATIONAL_OPERATOR, "<>", tokenLine);
             } else if (next_c == '=') {
-                return new Token(RELATIONAL_OPERATOR, "<=");
+                return new Token(RELATIONAL_OPERATOR, "<=", tokenLine);
             } else {
                 if (next_c != EOF) {
-                    ungetc(next_c, file);
+                    ungetChar(next_c, file);
                 }
-                return new Token(RELATIONAL_OPERATOR, "<");
+                return new Token(RELATIONAL_OPERATOR, "<", tokenLine);
             }
         }
         
         case '>': {
-            int next_c = fgetc(file);
+            int next_c = getChar(file);
             if (next_c == '=') {
-                return new Token(RELATIONAL_OPERATOR, ">=");
+                return new Token(RELATIONAL_OPERATOR, ">=", tokenLine);
             } else {
                 if (next_c != EOF) {
-                    ungetc(next_c, file);
+                    ungetChar(next_c, file);
                 }
-                return new Token(RELATIONAL_OPERATOR, ">");
+                return new Token(RELATIONAL_OPERATOR, ">", tokenLine);
             }
         }
         
         case ':': {
-            int next_c = fgetc(file);
+            int next_c = getChar(file);
             if (next_c == '=') {
-                return new Token(ASSIGN_OPERATOR, ":=");
+                return new Token(ASSIGN_OPERATOR, ":=", tokenLine);
             } else {
                 if (next_c != EOF) {
-                    ungetc(next_c, file);
+                    ungetChar(next_c, file);
                 }
-                return new Token(COLON, ":");
+                return new Token(COLON, ":", tokenLine);
             }
         }
         
         case ';':
-            return new Token(SEMICOLON, ";");
+            return new Token(SEMICOLON, ";", tokenLine);
             
         case ',':
-            return new Token(COMMA, ",");
+            return new Token(COMMA, ",", tokenLine);
             
         case '.': {
-            int next_c = fgetc(file);
+            int next_c = getChar(file);
             if (next_c == '.') {
-                return new Token(RANGE_OPERATOR, "..");
+                return new Token(RANGE_OPERATOR, "..", tokenLine);
             } else {
                 if (next_c != EOF) {
-                    ungetc(next_c, file);
+                    ungetChar(next_c, file);
                 }
-                return new Token(DOT, ".");
+                return new Token(DOT, ".", tokenLine);
             }
         }
         
         case ')':
-            return new Token(RPARENTHESIS, ")");
+            return new Token(RPARENTHESIS, ")", tokenLine);
             
         case '[':
-            return new Token(LBRACKET, "[");
+            return new Token(LBRACKET, "[", tokenLine);
             
         case ']':
-            return new Token(RBRACKET, "]");
+            return new Token(RBRACKET, "]", tokenLine);
             
         case '{': {
             // Skip brace comments - read until closing brace
@@ -204,7 +224,8 @@ Token* Lexer::readTokenSwitch(FILE* file) {
         }
         
         case '}':
-            printf("ERROR: Unexpected closing brace '}' at position %ld - no matching opening brace\n", ftell(file) - 1);
+            printf("ERROR at line %d: Unexpected closing brace '}' - no matching opening brace\n", 
+                   tokenLine);
             exit(1);
         
         case '\'': {
@@ -212,10 +233,10 @@ Token* Lexer::readTokenSwitch(FILE* file) {
             string value = "";
             int next_c;
             
-            while ((next_c = fgetc(file)) != '\'' && next_c != EOF) {
+            while ((next_c = getChar(file)) != '\'' && next_c != EOF) {
                 if (next_c == '\\') {
                     // Handle escape sequences
-                    int escaped = fgetc(file);
+                    int escaped = getChar(file);
                     if (escaped != EOF) {
                         switch (escaped) {
                             case 'n': value += '\n'; break;
@@ -235,7 +256,7 @@ Token* Lexer::readTokenSwitch(FILE* file) {
             }
             
             if (next_c == EOF) {
-                printf("ERROR: Unterminated literal at position %ld\n", ftell(file) - 1);
+                printf("ERROR at line %d: Unterminated literal\n", tokenLine);
                 exit(1);
             }
             
@@ -243,14 +264,14 @@ Token* Lexer::readTokenSwitch(FILE* file) {
             // Empty ('') and single character ('a') → CHAR_LITERAL
             // Multi-character ('abc') → STRING_LITERAL
             if (value.length() <= 1) {
-                return new Token(CHAR_LITERAL, value);
+                return new Token(CHAR_LITERAL, value, tokenLine);
             } else {
-                return new Token(STRING_LITERAL, value);
+                return new Token(STRING_LITERAL, value, tokenLine);
             }
         }
         
         case '(': {
-            int next_c = fgetc(file);
+            int next_c = getChar(file);
             if (next_c == '*') {
                 // Skip parenthesis comments - read until closing *)
                 skipParenComment(file);
@@ -259,14 +280,15 @@ Token* Lexer::readTokenSwitch(FILE* file) {
                 return readTokenSwitch(file);
             } else {
                 if (next_c != EOF) {
-                    ungetc(next_c, file);
+                    ungetChar(next_c, file);
                 }
-                return new Token(LPARENTHESIS, "(");
+                return new Token(LPARENTHESIS, "(", tokenLine);
             }
         }
         
         default:
-            printf("ERROR: Unrecognized character '%c' at position %ld\n", (char)c, ftell(file) - 1);
+            printf("ERROR at line %d: Unrecognized character '%c'\n", 
+                   tokenLine, (char)c);
             exit(1);
     }
     
@@ -309,7 +331,7 @@ void Lexer::initializeStateMapping() {
 
 }
 
-Token* Lexer::createToken(const string& state, const string& value) {
+Token* Lexer::createToken(const string& state, const string& value, int line) {
     // Check if this is a comment state - if so, return nullptr to indicate skip
     if (state == "S_COMMENT_SINGLE" || state == "S_COMMENT_MULTI") {
         return nullptr;  // Signal to skip this token
@@ -367,11 +389,11 @@ Token* Lexer::createToken(const string& state, const string& value) {
                 tokenType = CHAR_LITERAL;
             }
             
-            return new Token(tokenType, processed_content);
+            return new Token(tokenType, processed_content, line);
         }
     }
     
-    return new Token(tokenType, value);
+    return new Token(tokenType, value, line);
 }
 
 // DFA-based token reading
@@ -382,14 +404,17 @@ Token* Lexer::readTokenDFA(FILE* file) {
         return nullptr;
     }
     
+    int tokenLine = currentLine;
+    
     string currentState = dfa.getStartState();
     string tokenValue = "";
     string lastFinalState = "";
     string lastFinalValue = "";
     long lastFinalPosition = ftell(file);
+    int lastFinalLine = tokenLine;
     
     int c;
-    while ((c = fgetc(file)) != EOF) {
+    while ((c = getChar(file)) != EOF) {
         char input = (char)c;
         string nextState = dfa.getNextState(currentState, input);
         
@@ -398,14 +423,16 @@ Token* Lexer::readTokenDFA(FILE* file) {
             if (!lastFinalState.empty()) {
                 // Backtrack to last final state position
                 fseek(file, lastFinalPosition, SEEK_SET);
-                Token* token = createToken(lastFinalState, lastFinalValue);
+                currentLine = lastFinalLine;
+                Token* token = createToken(lastFinalState, lastFinalValue, tokenLine);
                 if (token == nullptr) {
                     // It was a comment, recursively get next token
                     return readTokenDFA(file);
                 }
                 return token;
             } else {
-                printf("ERROR: Unrecognized character '%c' at position %ld\n", input, ftell(file) - 1);
+                printf("ERROR at line %d: Unrecognized character '%c'\n", 
+                       currentLine, input);
                 exit(1);
             }
         }
@@ -419,12 +446,13 @@ Token* Lexer::readTokenDFA(FILE* file) {
             lastFinalState = currentState;
             lastFinalValue = tokenValue;
             lastFinalPosition = ftell(file);
+            lastFinalLine = currentLine;
         }
     }
     
     // End of file reached
     if (dfa.isFinalState(currentState)) {
-        Token* token = createToken(currentState, tokenValue);
+        Token* token = createToken(currentState, tokenValue, tokenLine);
         if (token == nullptr) {
             // It was a comment, recursively get next token
             return readTokenDFA(file);
@@ -432,7 +460,8 @@ Token* Lexer::readTokenDFA(FILE* file) {
         return token;
     } else if (!lastFinalState.empty()) {
         fseek(file, lastFinalPosition, SEEK_SET);
-        Token* token = createToken(lastFinalState, lastFinalValue);
+        currentLine = lastFinalLine;
+        Token* token = createToken(lastFinalState, lastFinalValue, tokenLine);
         if (token == nullptr) {
             // It was a comment, recursively get next token
             return readTokenDFA(file);
@@ -475,9 +504,10 @@ vector<Token*> Lexer::lex(FILE* file) {
             printf("%s\n", token->toString().c_str());
         } else if (mode == SWITCH_MODE && !feof(file)) {
             // Only report error if we're not at EOF
-            int c = fgetc(file);
+            int c = getChar(file);
             if (c != EOF) {
-                printf("ERROR: Unrecognized character '%c' at position %ld\n", (char)c, ftell(file) - 1);
+                printf("ERROR at line %d: Unrecognized character '%c'\n", 
+                       currentLine, (char)c);
                 exit(1);
             }
         }

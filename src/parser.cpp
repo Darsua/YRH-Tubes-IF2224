@@ -4,8 +4,8 @@
 
 using namespace std;
 
-ParseNode::ParseNode(const string& type, const string& val)
-    : nodeType(type), value(val) {}
+ParseNode::ParseNode(const string& type, const string& val, int ln)
+    : nodeType(type), value(val), line(ln) {}
 
 void ParseNode::addChild(shared_ptr<ParseNode> child) {
     if (child) {
@@ -116,13 +116,16 @@ void Parser::syntaxError(const string& message) {
     cerr << "\n========================================" << endl;
     cerr << "SYNTAX ERROR" << endl;
     cerr << "========================================" << endl;
-    cerr << "Position: Token #" << (currentPos + 1) << " of " << tokens.size() << endl;
-    cerr << "Message:  " << message << endl;
     
     if (token) {
+        cerr << "Location: Line " << token->getLine() << endl;
+        cerr << "Position: Token #" << (currentPos + 1) << " of " << tokens.size() << endl;
+        cerr << "Message:  " << message << endl;
         cerr << "Current:  " << token->toString() << endl;
     } else {
-        cerr << "Current:  <EOF> (Unexpected end of file)" << endl;
+        cerr << "Location: <EOF> (Unexpected end of file)" << endl;
+        cerr << "Position: Token #" << (currentPos + 1) << " of " << tokens.size() << endl;
+        cerr << "Message:  " << message << endl;
     }
     
     if (currentPos > 0 && currentPos - 1 < tokens.size()) {
@@ -134,7 +137,7 @@ void Parser::syntaxError(const string& message) {
     
     cerr << "========================================\n" << endl;
     
-    string errorMsg = "Token #" + to_string(currentPos + 1) + ": " + message;
+    string errorMsg = "Line " + to_string(token ? token->getLine() : 0) + ": " + message;
     errors.push_back(errorMsg);
 }
 
@@ -158,7 +161,8 @@ shared_ptr<ParseNode> Parser::parse() {
 
 // Grammar: <program> -> <program-header> + <declaration-part> + <compound-statement> + DOT
 shared_ptr<ParseNode> Parser::parseProgram() {
-    auto node = make_shared<ParseNode>("program");
+    Token* startToken = currentToken();
+    auto node = make_shared<ParseNode>("program", "", startToken ? startToken->getLine() : 0);
     
     auto header = parseProgramHeader();
     node->addChild(header);
@@ -171,7 +175,7 @@ shared_ptr<ParseNode> Parser::parseProgram() {
     
     Token* dotToken = currentToken();
     expect(DOT, "Expected '.' at end of program");
-    auto dotNode = make_shared<ParseNode>("DOT", dotToken->getValue());
+    auto dotNode = make_shared<ParseNode>("DOT", dotToken->getValue(), dotToken ? dotToken->getLine() : 0);
     node->addChild(dotNode);
 
     return node;
@@ -179,25 +183,25 @@ shared_ptr<ParseNode> Parser::parseProgram() {
 
 // Grammar: <program-header> -> KEYWORD(program) + IDENTIFIER + SEMICOLON
 shared_ptr<ParseNode> Parser::parseProgramHeader() {
-    auto node = make_shared<ParseNode>("program-header");
-    
     Token* progToken = currentToken();
+    auto node = make_shared<ParseNode>("program-header", "", progToken ? progToken->getLine() : 0);
+    
     expectKeyword("program", "Expected keyword 'program'");
-    auto progNode = make_shared<ParseNode>("KEYWORD", progToken->getValue());
+    auto progNode = make_shared<ParseNode>("KEYWORD", progToken->getValue(), progToken ? progToken->getLine() : 0);
     node->addChild(progNode);
     
     Token* token = currentToken();
     if (!match(IDENTIFIER)) {
         syntaxError("Expected program name (identifier)");
     } else {
-        auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+    auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(), token ? token->getLine() : 0);
         node->addChild(idNode);
         advance();
     }
     
     Token* semiToken = currentToken();
     expect(SEMICOLON, "Expected ';' after program name");
-    auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue());
+    auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue(), semiToken ? semiToken->getLine() : 0);
     node->addChild(semiNode);
     
     return node;
@@ -205,7 +209,8 @@ shared_ptr<ParseNode> Parser::parseProgramHeader() {
 
 // Grammar: <declaration-part> -> <const-declaration>* + <type-declaration>* + <var-declaration>* + <subprogram-declaration>*
 shared_ptr<ParseNode> Parser::parseDeclarationPart() {
-    auto node = make_shared<ParseNode>("declaration-part");
+    Token* startToken = currentToken();
+    auto node = make_shared<ParseNode>("declaration-part", "", startToken ? startToken->getLine() : 0);
     
     if (matchKeyword("konstanta")) {
         auto constDecl = parseConstDeclaration();
@@ -232,11 +237,12 @@ shared_ptr<ParseNode> Parser::parseDeclarationPart() {
 
 // Grammar: <const-declaration> -> KEYWORD(konstanta) + (IDENTIFIER RELATIONAL_OPERATOR(=) <constant-value> + SEMICOLON)+
 shared_ptr<ParseNode> Parser::parseConstDeclaration() {
-    auto node = make_shared<ParseNode>("const-declaration");
+    Token* startToken = currentToken();
+    auto node = make_shared<ParseNode>("const-declaration", "", startToken ? startToken->getLine() : 0);
     
     Token* constToken = currentToken();
     expectKeyword("konstanta", "Expected 'konstanta'");
-    auto constNode = make_shared<ParseNode>("KEYWORD", constToken->getValue());
+    auto constNode = make_shared<ParseNode>("KEYWORD", constToken->getValue(), constToken ? constToken->getLine() : 0);
     node->addChild(constNode);
     
     do {
@@ -246,13 +252,13 @@ shared_ptr<ParseNode> Parser::parseConstDeclaration() {
             break;
         }
         
-        auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+    auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(), token ? token->getLine() : 0);
         node->addChild(idNode);
         advance();
         
         Token* eqToken = currentToken();
         expect(RELATIONAL_OPERATOR, "Expected '=' in constant declaration");
-        auto eqNode = make_shared<ParseNode>("RELATIONAL_OPERATOR", eqToken->getValue());
+    auto eqNode = make_shared<ParseNode>("RELATIONAL_OPERATOR", eqToken->getValue(), eqToken ? eqToken->getLine() : 0);
         node->addChild(eqNode);
         
         token = currentToken();
@@ -285,12 +291,12 @@ shared_ptr<ParseNode> Parser::parseConstDeclaration() {
             syntaxError("Expected constant value (number or string)");
         }
         
-        auto valueNode = make_shared<ParseNode>("constant-value", constValue);
+    auto valueNode = make_shared<ParseNode>("constant-value", constValue, token ? token->getLine() : 0);
         node->addChild(valueNode);
         
         Token* semiToken = currentToken();
         expect(SEMICOLON, "Expected ';' after constant declaration");
-        auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue());
+    auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue(), semiToken ? semiToken->getLine() : 0);
         node->addChild(semiNode);
         
     } while (match(IDENTIFIER) && !matchKeyword("tipe") && !matchKeyword("variabel") && 
@@ -301,11 +307,12 @@ shared_ptr<ParseNode> Parser::parseConstDeclaration() {
 
 // Grammar: <type-declaration> -> KEYWORD(tipe) + (<type-definition>)+
 shared_ptr<ParseNode> Parser::parseTypeDeclaration() {
-    auto node = make_shared<ParseNode>("type-declaration");
+    Token* startToken = currentToken();
+    auto node = make_shared<ParseNode>("type-declaration", "", startToken ? startToken->getLine() : 0);
     
     Token* typeToken = currentToken();
     expectKeyword("tipe", "Expected 'tipe'");
-    auto typeNode = make_shared<ParseNode>("KEYWORD", typeToken->getValue());
+    auto typeNode = make_shared<ParseNode>("KEYWORD", typeToken->getValue(), typeToken ? typeToken->getLine() : 0);
     node->addChild(typeNode);
     
     do {
@@ -319,7 +326,8 @@ shared_ptr<ParseNode> Parser::parseTypeDeclaration() {
 
 // Grammar: <type-definition> -> IDENTIFIER RELATIONAL_OPERATOR(=) <type> + SEMICOLON
 shared_ptr<ParseNode> Parser::parseTypeDefinition() {
-    auto node = make_shared<ParseNode>("type-definition");
+    Token* startToken = currentToken();
+    auto node = make_shared<ParseNode>("type-definition", "", startToken ? startToken->getLine() : 0);
     
     Token* token = currentToken();
     if (!match(IDENTIFIER)) {
@@ -327,13 +335,13 @@ shared_ptr<ParseNode> Parser::parseTypeDefinition() {
         return node;
     }
     
-    auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+    auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(), token ? token->getLine() : 0);
     node->addChild(idNode);
     advance();
     
     Token* eqToken = currentToken();
     expect(RELATIONAL_OPERATOR, "Expected '=' in type definition");
-    auto eqNode = make_shared<ParseNode>("RELATIONAL_OPERATOR", eqToken->getValue());
+    auto eqNode = make_shared<ParseNode>("RELATIONAL_OPERATOR", eqToken->getValue(), eqToken ? eqToken->getLine() : 0);
     node->addChild(eqNode);
     
     auto typeNode = parseType();
@@ -341,7 +349,7 @@ shared_ptr<ParseNode> Parser::parseTypeDefinition() {
     
     Token* semiToken = currentToken();
     expect(SEMICOLON, "Expected ';' after type definition");
-    auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue());
+    auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue(), semiToken ? semiToken->getLine() : 0);
     node->addChild(semiNode);
     
     return node;
@@ -349,11 +357,12 @@ shared_ptr<ParseNode> Parser::parseTypeDefinition() {
 
 // Grammar: <var-declaration> -> KEYWORD(variabel) (<identifier-list> + COLON + <type> + SEMICOLON)+
 shared_ptr<ParseNode> Parser::parseVarDeclaration() {
-    auto node = make_shared<ParseNode>("var-declaration");
+    Token* startToken = currentToken();
+    auto node = make_shared<ParseNode>("var-declaration", "", startToken ? startToken->getLine() : 0);
     
     Token* varToken = currentToken();
     expectKeyword("variabel", "Expected 'variabel'");
-    auto varNode = make_shared<ParseNode>("KEYWORD", varToken->getValue());
+    auto varNode = make_shared<ParseNode>("KEYWORD", varToken->getValue(), varToken ? varToken->getLine() : 0);
     node->addChild(varNode);
     
     do {
@@ -382,7 +391,8 @@ shared_ptr<ParseNode> Parser::parseVarDeclaration() {
 
 // Grammar: <identifier-list> -> IDENTIFIER (COMMA + IDENTIFIER)*
 shared_ptr<ParseNode> Parser::parseIdentifierList() {
-    auto node = make_shared<ParseNode>("identifier-list");
+    Token* startToken = currentToken();
+    auto node = make_shared<ParseNode>("identifier-list", "", startToken ? startToken->getLine() : 0);
     
     Token* token = currentToken();
     if (!match(IDENTIFIER)) {
@@ -390,13 +400,13 @@ shared_ptr<ParseNode> Parser::parseIdentifierList() {
         return node;
     }
     
-    auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+    auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(), token ? token->getLine() : 0);
     node->addChild(idNode);
     advance();
     
     while (match(COMMA)) {
         Token* commaToken = currentToken();
-        auto commaNode = make_shared<ParseNode>("COMMA", commaToken->getValue());
+    auto commaNode = make_shared<ParseNode>("COMMA", commaToken->getValue(), commaToken ? commaToken->getLine() : 0);
         node->addChild(commaNode);
         advance();
         
@@ -406,7 +416,8 @@ shared_ptr<ParseNode> Parser::parseIdentifierList() {
             break;
         }
         
-        idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+        idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(),
+                                       token->getLine());
         node->addChild(idNode);
         advance();
     }
@@ -416,7 +427,7 @@ shared_ptr<ParseNode> Parser::parseIdentifierList() {
 
 // Grammar: <type> -> <array-type> | <record-type> | <range> | KEYWORD(integer|real|boolean|char) | IDENTIFIER
 shared_ptr<ParseNode> Parser::parseType() {
-    auto node = make_shared<ParseNode>("type");
+    auto node = make_shared<ParseNode>("type", "", currentToken() ? currentToken()->getLine() : 0);
     
     if (matchKeyword("larik")) {
         auto arrayType = parseArrayType();
@@ -459,7 +470,7 @@ shared_ptr<ParseNode> Parser::parseType() {
 
 // Grammar: <array-type> -> KEYWORD(larik) + LBRACKET + <range> + RBRACKET + KEYWORD(dari) + <type>
 shared_ptr<ParseNode> Parser::parseArrayType() {
-    auto node = make_shared<ParseNode>("array-type");
+    auto node = make_shared<ParseNode>("array-type", "", currentToken() ? currentToken()->getLine() : 0);
     
     Token* larikToken = currentToken();
     expectKeyword("larik", "Expected 'larik'");
@@ -494,7 +505,7 @@ shared_ptr<ParseNode> Parser::parseArrayType() {
 
 // Grammar: <record-type> -> KEYWORD(rekaman) + (<identifier-list> + COLON + <type> + SEMICOLON)+ KEYWORD(selesai)
 shared_ptr<ParseNode> Parser::parseRecordType() {
-    auto node = make_shared<ParseNode>("record-type");
+    auto node = make_shared<ParseNode>("record-type", "", currentToken() ? currentToken()->getLine() : 0);
     
     Token* rekamanToken = currentToken();
     expectKeyword("rekaman", "Expected 'rekaman'");
@@ -502,14 +513,14 @@ shared_ptr<ParseNode> Parser::parseRecordType() {
     node->addChild(rekamanNode);
     
     while (!matchKeyword("selesai") && currentToken()) {
-        auto fieldNode = make_shared<ParseNode>("field-declaration");
+    auto fieldNode = make_shared<ParseNode>("field-declaration", "", currentToken() ? currentToken()->getLine() : 0);
         
         auto idList = parseIdentifierList();
         fieldNode->addChild(idList);
         
         Token* colonToken = currentToken();
         expect(COLON, "Expected ':' after field names");
-        auto colonNode = make_shared<ParseNode>("COLON", colonToken->getValue());
+    auto colonNode = make_shared<ParseNode>("COLON", colonToken->getValue(), colonToken ? colonToken->getLine() : 0);
         fieldNode->addChild(colonNode);
         
         auto typeNode = parseType();
@@ -517,7 +528,7 @@ shared_ptr<ParseNode> Parser::parseRecordType() {
         
         Token* semiToken = currentToken();
         expect(SEMICOLON, "Expected ';' after field declaration");
-        auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue());
+    auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue(), semiToken ? semiToken->getLine() : 0);
         fieldNode->addChild(semiNode);
         
         node->addChild(fieldNode);
@@ -525,7 +536,7 @@ shared_ptr<ParseNode> Parser::parseRecordType() {
     
     Token* selesaiToken = currentToken();
     expectKeyword("selesai", "Expected 'selesai' to end record");
-    auto selesaiNode = make_shared<ParseNode>("KEYWORD", selesaiToken->getValue());
+    auto selesaiNode = make_shared<ParseNode>("KEYWORD", selesaiToken->getValue(), selesaiToken ? selesaiToken->getLine() : 0);
     node->addChild(selesaiNode);
     
     return node;
@@ -533,7 +544,7 @@ shared_ptr<ParseNode> Parser::parseRecordType() {
 
 // Grammar: <range> -> <expression> + RANGE_OPERATOR(..) + <expression>
 shared_ptr<ParseNode> Parser::parseRange() {
-    auto node = make_shared<ParseNode>("range");
+    auto node = make_shared<ParseNode>("range", "", currentToken() ? currentToken()->getLine() : 0);
     
     auto lowerExpr = parseExpression();
     node->addChild(lowerExpr);
@@ -579,7 +590,7 @@ shared_ptr<ParseNode> Parser::parseProcedureDeclaration() {
     if (!match(IDENTIFIER)) {
         syntaxError("Expected procedure name");
     } else {
-        auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+    auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(), token ? token->getLine() : 0);
         node->addChild(idNode);
         advance();
     }
@@ -621,7 +632,7 @@ shared_ptr<ParseNode> Parser::parseFunctionDeclaration() {
     if (!match(IDENTIFIER)) {
         syntaxError("Expected function name");
     } else {
-        auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+        auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(), token ? token->getLine() : 0);
         node->addChild(idNode);
         advance();
     }
@@ -633,7 +644,7 @@ shared_ptr<ParseNode> Parser::parseFunctionDeclaration() {
     
     Token* colonToken = currentToken();
     expect(COLON, "Expected ':' before return type");
-    auto colonNode = make_shared<ParseNode>("COLON", colonToken->getValue());
+    auto colonNode = make_shared<ParseNode>("COLON", colonToken->getValue(), colonToken ? colonToken->getLine() : 0);
     node->addChild(colonNode);
     
     auto returnType = parseType();
@@ -806,7 +817,8 @@ shared_ptr<ParseNode> Parser::parseAssignmentStatement() {
         return node;
     }
     
-    auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+    auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(), 
+                                         token->getLine());
     node->addChild(idNode);
     advance();
     
@@ -817,7 +829,8 @@ shared_ptr<ParseNode> Parser::parseAssignmentStatement() {
         }
         
         Token* dotToken = currentToken();
-        auto dotNode = make_shared<ParseNode>("DOT", dotToken->getValue());
+        auto dotNode = make_shared<ParseNode>("DOT", dotToken->getValue(),
+                                             dotToken->getLine());
         node->addChild(dotNode);
         advance();
         
@@ -827,7 +840,8 @@ shared_ptr<ParseNode> Parser::parseAssignmentStatement() {
             break;
         }
         
-        auto fieldNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+        auto fieldNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(),
+                                               token->getLine());
         node->addChild(fieldNode);
         advance();
     }
@@ -984,7 +998,7 @@ shared_ptr<ParseNode> Parser::parseForStatement() {
         return node;
     }
     
-    auto varNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+    auto varNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(), token ? token->getLine() : 0);
     node->addChild(varNode);
     advance();
     
@@ -1066,7 +1080,7 @@ shared_ptr<ParseNode> Parser::parseProcedureFunctionCall() {
     }
     
     string procName = token->getValue();
-    auto idNode = make_shared<ParseNode>("IDENTIFIER", procName);
+    auto idNode = make_shared<ParseNode>("IDENTIFIER", procName, token ? token->getLine() : 0);
     node->addChild(idNode);
     advance();
     
@@ -1085,7 +1099,7 @@ shared_ptr<ParseNode> Parser::parseProcedureFunctionCall() {
     
     if (match(SEMICOLON)) {
         Token* semiToken = currentToken();
-        auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue());
+    auto semiNode = make_shared<ParseNode>("SEMICOLON", semiToken->getValue(), semiToken ? semiToken->getLine() : 0);
         node->addChild(semiNode);
         advance();
     }
@@ -1211,7 +1225,7 @@ shared_ptr<ParseNode> Parser::parseFactor() {
         auto factorNode = parseFactor();
         node->addChild(factorNode);
     } else if (match(IDENTIFIER)) {
-        auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+        auto idNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(), token ? token->getLine() : 0);
         node->addChild(idNode);
         advance();
         
@@ -1234,7 +1248,7 @@ shared_ptr<ParseNode> Parser::parseFactor() {
                     break;
                 }
                 
-                auto fieldNode = make_shared<ParseNode>("IDENTIFIER", token->getValue());
+                auto fieldNode = make_shared<ParseNode>("IDENTIFIER", token->getValue(), token ? token->getLine() : 0);
                 node->addChild(fieldNode);
                 advance();
             } else if (match(LBRACKET)) {

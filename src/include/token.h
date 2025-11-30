@@ -30,13 +30,15 @@ class Token {
 private:
     Type type;
     string value;
+    int line;
     
 public:
-    Token(Type type, string value);
+    Token(Type type, string value, int line = 0);
     string toString() const;
     string getValue() const;
     string getTypeName() const;
     Type getType() const;
+    int getLine() const;
 };
 
 #endif // TOKEN_H
