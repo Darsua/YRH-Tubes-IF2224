@@ -428,7 +428,14 @@ mulai
     selesai;
     
     { Final complex expression }
-    result := ((fibonacci(10) + factorial(5)) * gcd(48, 18)) bagi (checkRange(50, 0, 100) + 1);
+    jika checkRange(50, 0, 100) maka
+    mulai
+        result := ((fibonacci(10) + factorial(5)) * gcd(48, 18)) bagi 2;
+    selesai
+    selain_itu
+    mulai
+        result := ((fibonacci(10) + factorial(5)) * gcd(48, 18)) bagi 1;
+    selesai;
     
     { Test reverse loop }
     reverseProcess();
