@@ -19,7 +19,8 @@ all: $(TARGET)
 
 # Formatting
 CLANG_FORMAT = clang-format
-FORMAT_SRCS = $(wildcard src/*.cpp) $(wildcard src/*.h) $(wildcard include/*.h)
+FORMAT_SRCS = $(wildcard src/*.cpp) $(wildcard src/*.h) \
+			  $(wildcard src/include/*.h) $(wildcard include/*.h) $(wildcard include/*.hpp)
 
 .PHONY: format
 format:

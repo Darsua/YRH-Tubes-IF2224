@@ -40,13 +40,13 @@ bool DFA::isFinalState(const string& state) const {
 bool DFA::loadDFAFromFile(const string& filename) {
     ifstream file(filename);
     if (!file.is_open()) return false;
-    
+
     string line;
-    
+
     while (getline(file, line)) {
         // Skip empty lines and comments
         if (line.empty() || line[0] == '#') continue;
-        
+
         // Handle start state definition
         if (line.find("Start_state =") == 0) {
             size_t pos = line.find('=');
@@ -59,7 +59,7 @@ bool DFA::loadDFAFromFile(const string& filename) {
             }
             continue;
         }
-        
+
         // Handle final states definition
         if (line.find("Final_state =") == 0) {
             size_t pos = line.find('=');
@@ -68,7 +68,7 @@ bool DFA::loadDFAFromFile(const string& filename) {
                 // Trim whitespace
                 states_str.erase(0, states_str.find_first_not_of(" \t"));
                 states_str.erase(states_str.find_last_not_of(" \t") + 1);
-                
+
                 // Split by comma and add each final state
                 istringstream ss(states_str);
                 string state;
@@ -83,11 +83,11 @@ bool DFA::loadDFAFromFile(const string& filename) {
             }
             continue;
         }
-        
+
         // Handle transition rules
         istringstream iss(line);
         string from_state, input_str, to_state;
-        
+
         if (iss >> from_state >> input_str >> to_state) {
             char input;
             if (input_str == "SPACE") {
@@ -101,13 +101,13 @@ bool DFA::loadDFAFromFile(const string& filename) {
             } else if (input_str.length() == 1) {
                 input = input_str[0];
             } else {
-                continue; // Skip invalid transitions
+                continue;  // Skip invalid transitions
             }
             addTransition(from_state, input, to_state);
         }
     }
-    
+
     file.close();
-    
+
     return !transitions.empty();
 }

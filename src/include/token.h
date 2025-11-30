@@ -27,12 +27,12 @@ enum Type {
 };
 
 class Token {
-private:
+   private:
     Type type;
     string value;
     int line;
-    
-public:
+
+   public:
     Token(Type type, string value, int line = 0);
     string toString() const;
     string getValue() const;
@@ -41,4 +41,4 @@ public:
     int getLine() const;
 };
 
-#endif // TOKEN_H
+#endif  // TOKEN_H

@@ -8,16 +8,16 @@
 #include <memory>
 
 class SemanticAnalyzer : public ASTVisitor {
-private:
+   private:
     SymbolTable& symbolTable;
     std::vector<std::string> errors;
     int currentLevel;
     int currentBlockIndex;
-    
+
     void addError(const std::string& msg) {
         errors.push_back(msg);
     }
-    
+
     void reportError(const std::string& message, int line = -1) {
         std::string fullMessage = "Semantic Error";
         if (line > 0) {
@@ -27,15 +27,15 @@ private:
         addError(fullMessage);
     }
 
-public:
+   public:
     SemanticAnalyzer(SymbolTable& symTable);
-    
+
     void analyze(std::shared_ptr<ASTNode> root);
-    
+
     const std::vector<std::string>& getErrors() const {
         return errors;
     }
-    
+
     // Visitor methods
     void visitProgram(ProgramNode* node) override;
     void visitVarDecl(VarDeclNode* node) override;
@@ -60,8 +60,8 @@ public:
     void visitVar(VarNode* node) override;
     void visitArrayAccess(ArrayAccessNode* node) override;
     void visitRecordAccess(RecordAccessNode* node) override;
-    
-private:
+
+   private:
     // Helper methods for address calculation
     void calculateParameterAddresses(int blockIdx, size_t paramCount);
     void calculateVariableAddresses(int blockIdx);
